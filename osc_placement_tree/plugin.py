@@ -18,30 +18,31 @@ from osc_lib import utils
 
 LOG = logging.getLogger(__name__)
 
-SUPPORTED_VERSIONS = [
-    '1.20'
-    ]
-API_NAME = 'placement'
-API_VERSION_OPTION = 'os_placement_api_version'
-API_VERSIONS = {v: 'osc_placement.http.SessionClient'
-                for v in SUPPORTED_VERSIONS}
+# needs something different than placement not to conflict with osc-placement
+API_NAME = 'placement_tree'
+# this is needed by OSC to be defined even if this plugin does not provide
+# such option for the end user
+API_VERSION_OPTION = ''
+# 1.14 is needed for reading nested RPs with in_tree query
+MINIMUM_PLACEMENT_VERSION = '1.14'
 
 
 def make_client(instance):
     client_class = utils.get_client_class(
         API_NAME,
-        instance._api_version[API_NAME],
-        API_VERSIONS
+        MINIMUM_PLACEMENT_VERSION,
+        {MINIMUM_PLACEMENT_VERSION: 'osc_placement_tree.http.SessionClient'}
     )
 
-    ks_filter = {'service_type': API_NAME,
+    ks_filter = {'service_type': 'placement',
                  'region_name': instance._region_name,
                  'interface': instance.interface}
 
-    LOG.debug('Instantiating placement client: %s', client_class)
+    LOG.debug('Instantiating placement client for placement_tree: %s',
+              client_class)
     return client_class(session=instance.session,
                         ks_filter=ks_filter,
-                        api_version=instance._api_version[API_NAME])
+                        api_version=MINIMUM_PLACEMENT_VERSION)
 
 
 def build_option_parser(parser):

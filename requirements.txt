@@ -6,3 +6,4 @@ pbr>=2.0.0 # Apache-2.0
 six>=1.10.0 # MIT
 keystoneauth1>=3.3.0 # Apache-2.0
 osc-lib>=1.2.0  # Apache-2.0
+graphviz>=0.8.4 # MIT

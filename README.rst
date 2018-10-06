@@ -1,3 +1,6 @@
+.. image:: https://travis-ci.org/gibizer/osc-placement-tree.svg?branch=master
+    :target: https://travis-ci.org/gibizer/osc-placement-tree
+
 ==================
 osc-placement-tree
 ==================

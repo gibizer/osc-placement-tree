@@ -13,3 +13,13 @@ consumers are encouraged to use the REST API directly, CLI is provided only
 for convenience of users.
 
 * Free software: Apache license
+
+
+Example
+-------
+.. code:: bash
+
+  $ openstack resource provider tree list | dot -Tsvg
+
+.. image:: doc/example.svg
+

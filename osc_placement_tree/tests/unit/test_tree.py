@@ -158,3 +158,48 @@ class TestTree(base.BaseTestCase):
             mock_client.get.assert_any_call(
                 '/resource_providers/%s/aggregates' % rp)
         self.assertEqual(19, mock_client.get.call_count)
+
+    def test_make_rp_trees_two_simple_root(self):
+        mock_client = mock.Mock()
+        mock_client.get.side_effect = [
+            # resource_providers call
+            {'resource_providers': [
+                {'uuid': uuids.root_rp_A,
+                 'parent_provider_uuid': None},
+                {'uuid': uuids.root_rp_B,
+                 'parent_provider_uuid': None},
+            ]
+            },
+            # extending data calls for root_rp_A
+            {'call1-key': 1},
+            {'call2-key': 2},
+            {'call3-key': 3},
+            # extending data calls for root_rp_B
+            {'call1-key': 4},
+            {'call2-key': 5},
+            {'call3-key': 6},
+        ]
+
+        roots = tree.make_rp_trees(mock_client)
+
+        self.assertEqual(2, len(roots))
+        self.assertEqual({uuids.root_rp_A, uuids.root_rp_B},
+                         {root.data['uuid'] for root in roots})
+        for root in roots:
+            self.assertEqual(0, len(root.children))
+            # assert that extended data has been included
+            self.assertTrue(all(root.data[key]
+                                for key in ['call1-key', 'call2-key',
+                                            'call3-key']))
+
+        mock_client.get.assert_any_call('/resource_providers')
+
+        for uuid in [uuids.root_rp_A, uuids.root_rp_B]:
+            mock_client.get.assert_any_call(
+                '/resource_providers/%s/inventories' % uuid)
+            mock_client.get.assert_any_call(
+                '/resource_providers/%s/traits' % uuid)
+            mock_client.get.assert_any_call(
+                '/resource_providers/%s/aggregates' % uuid)
+
+        self.assertEqual(7, mock_client.get.call_count)

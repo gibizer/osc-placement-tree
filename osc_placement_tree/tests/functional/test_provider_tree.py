@@ -16,7 +16,9 @@ from osc_placement_tree.tests import uuids
 
 class TestProviderTree(base.TestBase):
 
-    def test_provider_tree_show(self):
+    def setUp(self):
+        super(TestProviderTree, self).setUp()
+
         self.create_rp(uuids.compute0_with_disk)
         self.create_rp(uuids.compute0_with_disk_NUMA0,
                        parent_rp_uuid=uuids.compute0_with_disk)
@@ -27,15 +29,11 @@ class TestProviderTree(base.TestBase):
                               'DISK_GB=256',
                               'DISK_GB:reserved=16')
 
-        self.create_rp(uuids.shared_disk)
-        self.update_inventory(uuids.compute0_with_disk,
-                              'DISK_GB=1024')
-
         self.update_inventory(uuids.compute0_with_disk_NUMA0,
                               'VCPU=4',
                               'VCPU:allocation_ratio=16.0',
                               'VCPU:reserved=1',
-                              'MEMORY_MB=6384',
+                              'MEMORY_MB=16384',
                               'MEMORY_MB:reserved=1024')
 
         self.update_inventory(uuids.compute0_with_disk_NUMA1,
@@ -43,6 +41,33 @@ class TestProviderTree(base.TestBase):
                               'VCPU:allocation_ratio=16.0',
                               'MEMORY_MB=16384')
 
+        self.create_rp(uuids.compute1_with_disk)
+        self.create_rp(uuids.compute1_with_disk_NUMA0,
+                       parent_rp_uuid=uuids.compute1_with_disk)
+        self.create_rp(uuids.compute1_with_disk_NUMA1,
+                       parent_rp_uuid=uuids.compute1_with_disk)
+
+        self.update_inventory(uuids.compute1_with_disk,
+                              'DISK_GB=128',
+                              'DISK_GB:reserved=16')
+
+        self.update_inventory(uuids.compute1_with_disk_NUMA0,
+                              'VCPU=8',
+                              'VCPU:allocation_ratio=16.0',
+                              'VCPU:reserved=1',
+                              'MEMORY_MB=16384',
+                              'MEMORY_MB:reserved=1024')
+
+        self.update_inventory(uuids.compute1_with_disk_NUMA1,
+                              'VCPU=8',
+                              'VCPU:allocation_ratio=16.0',
+                              'MEMORY_MB=16384')
+
+    def test_provider_tree_show(self):
         dot_src = self.openstack('resource provider tree show %s' %
                                  uuids.compute0_with_disk)
+        self.assertDot(dot_src)
+
+    def test_provider_tree_list(self):
+        dot_src = self.openstack('resource provider tree list')
         self.assertDot(dot_src)

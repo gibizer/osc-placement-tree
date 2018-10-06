@@ -29,6 +29,51 @@ class TreeNode(object):
             child.walk(func)
 
 
+def _build_tree(all_nodes, current_node):
+    """Do a recursive breadth-first walk of the tree and build relationships"""
+    children = filter(
+        lambda node: (node.data['parent_provider_uuid'] ==
+                      current_node.data['uuid']),
+        all_nodes)
+
+    current_node.children = children
+    for node in children:
+        _build_tree(all_nodes, node)
+
+
+def _extend_placement_rps(rps, client, drop_fields=None):
+    return [_extend_rp_data(client, rp, drop_fields) for rp in rps]
+
+
+def _wrap_placement_rps_into_tree_nodes(rps):
+    return [TreeNode(data=rp) for rp in rps]
+
+
+def _get_roots(nodes):
+    return [node for node in nodes
+            if node.data['parent_provider_uuid'] is None]
+
+
+def make_rp_trees(client, drop_fields=None):
+    """Builds the whole RP graph
+
+    :param client: a placement client providing a get(url) call that returns
+                   the REST response body as a python object
+    :param drop_fields: the list of field names not to include in the result
+    :return: a list of TreeNode objects
+    """
+    url = '/resource_providers'
+    rps = client.get(url)['resource_providers']
+
+    rps = _extend_placement_rps(rps, client, drop_fields=drop_fields)
+    nodes = _wrap_placement_rps_into_tree_nodes(rps)
+    roots = _get_roots(nodes)
+
+    for root in roots:
+        _build_tree(nodes, root)
+    return roots
+
+
 def make_rp_tree(client, in_tree_rp_uuid, drop_fields=None):
     """Builds a tree from TreeNodes containing the RP tree
 
@@ -43,23 +88,11 @@ def make_rp_tree(client, in_tree_rp_uuid, drop_fields=None):
     if not rps_in_tree:
         return None
 
-    nodes = [TreeNode(data=_extend_rp_data(client, rp, drop_fields))
-             for rp in rps_in_tree]
-    root = [node for node in nodes
-            if node.data['parent_provider_uuid'] is None][0]
+    rps = _extend_placement_rps(rps_in_tree, client, drop_fields=drop_fields)
+    nodes = _wrap_placement_rps_into_tree_nodes(rps)
+    root = _get_roots(nodes)[0]
 
-    def build_tree(all_nodes, current_node):
-        # do a recursive breadth-first walk of the tree
-        children = filter(
-            lambda node: (node.data['parent_provider_uuid'] ==
-                          current_node.data['uuid']),
-            all_nodes)
-
-        current_node.children = children
-        for node in children:
-            build_tree(all_nodes, node)
-
-    build_tree(nodes, root)
+    _build_tree(nodes, root)
     return root
 
 

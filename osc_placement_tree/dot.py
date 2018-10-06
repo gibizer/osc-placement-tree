@@ -13,7 +13,22 @@
 import graphviz
 
 
-def to_dot(tree_root, id_selector):
+def trees_to_dot(tree_roots, id_selector):
+    """Convert a list of TreeNode roots to graphviz dot format
+
+    :param tree_roots: the list of roots of the graph
+    :param id_selector: TreeNode -> scalar function that selects provides the
+                        unique id of the node
+    :return: a dot formatted string
+    """
+    dot = graphviz.Digraph(node_attr={'shape': 'plaintext'})
+
+    for root in tree_roots:
+        _add_tree_to_dot(root, dot, id_selector)
+    return dot.source
+
+
+def tree_to_dot(tree_root, id_selector):
     """Convert a TreeNode to graphviz dot format
 
     :param tree_root: the root of the tree
@@ -22,6 +37,19 @@ def to_dot(tree_root, id_selector):
     :return: a dot formatted string
     """
     dot = graphviz.Digraph(node_attr={'shape': 'plaintext'})
+
+    _add_tree_to_dot(tree_root, dot, id_selector)
+    return dot.source
+
+
+def _add_tree_to_dot(tree_root, dot, id_selector):
+    """Update the graph with the current given tree
+
+    :param tree_root: the root of the tree to be added
+    :param dot: the graph to be updated
+    :param id_selector: TreeNode -> scalar function that selects provides the
+                        unique id of the node
+    """
 
     def add_node(node):
         dot.node(id_selector(node), _get_attr_html(node.data))
@@ -32,7 +60,6 @@ def to_dot(tree_root, id_selector):
 
     tree_root.walk(add_node)
     tree_root.walk(add_edges)
-    return dot.source
 
 
 def _get_attr_html(data_dict):

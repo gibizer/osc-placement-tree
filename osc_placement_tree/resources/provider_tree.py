@@ -48,5 +48,24 @@ class ShowProviderTree(command.Command):
             drop_fields=['links', 'resource_provider_generation'])
 
         print(
-            dot.to_dot(tree_root,
-                       id_selector=lambda node: node.data['uuid']))
+            dot.tree_to_dot(tree_root,
+                            id_selector=lambda node: node.data['uuid']))
+
+
+class ListProviderTree(command.Command):
+    """Show the whole RP graph"""
+
+    def get_parser(self, prog_name):
+        parser = super(ListProviderTree, self).get_parser(prog_name)
+        return parser
+
+    def take_action(self, parsed_args):
+        http = self.app.client_manager.placement_tree
+
+        tree_roots = tree.make_rp_trees(
+            ClientAdapter(http),
+            drop_fields=['links', 'resource_provider_generation'])
+
+        print(
+            dot.trees_to_dot(tree_roots,
+                             id_selector=lambda node: node.data['uuid']))

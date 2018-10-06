@@ -31,11 +31,9 @@ class TreeNode(object):
 
 def _build_tree(all_nodes, current_node):
     """Do a recursive breadth-first walk of the tree and build relationships"""
-    children = filter(
-        lambda node: (node.data['parent_provider_uuid'] ==
-                      current_node.data['uuid']),
-        all_nodes)
-
+    children = [node for node in all_nodes
+                if (node.data['parent_provider_uuid'] ==
+                    current_node.data['uuid'])]
     current_node.children = children
     for node in children:
         _build_tree(all_nodes, node)

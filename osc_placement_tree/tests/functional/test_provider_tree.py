@@ -68,6 +68,17 @@ class TestProviderTree(base.TestBase):
                                  uuids.compute0_with_disk)
         self.assertDot(dot_src)
 
+    def test_provider_tree_show_with_fields(self):
+        dot_src = self.openstack('resource provider tree show %s '
+                                 '--fields uuid,name'
+                                 % uuids.compute0_with_disk)
+        self.assertDot(dot_src)
+
     def test_provider_tree_list(self):
         dot_src = self.openstack('resource provider tree list')
+        self.assertDot(dot_src)
+
+    def test_provider_tree_list_with_fields(self):
+        dot_src = self.openstack('resource provider tree list '
+                                 '--fields uuid,name')
         self.assertDot(dot_src)

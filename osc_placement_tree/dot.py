@@ -13,46 +13,55 @@
 import graphviz
 
 
-def trees_to_dot(tree_roots, id_selector):
+def trees_to_dot(tree_roots, id_selector, field_filter=lambda _: True):
     """Convert a list of TreeNode roots to graphviz dot format
 
     :param tree_roots: the list of roots of the graph
     :param id_selector: TreeNode -> scalar function that selects provides the
                         unique id of the node
+    :param field_filter: field name -> bool function that returns True for
+                         fields that need to be kept in the dot output
     :return: a dot formatted string
     """
     dot = graphviz.Digraph(node_attr={'shape': 'plaintext'})
 
     for root in tree_roots:
-        _add_tree_to_dot(root, dot, id_selector)
+        _add_tree_to_dot(root, dot, id_selector, field_filter)
     return dot.source
 
 
-def tree_to_dot(tree_root, id_selector):
+def tree_to_dot(tree_root, id_selector, field_filter=lambda _: True):
     """Convert a TreeNode to graphviz dot format
 
     :param tree_root: the root of the tree
     :param id_selector: TreeNode -> scalar function that selects provides the
                         unique id of the node
+    :param field_filter: field name -> bool function that returns True for
+                         fields that need to be kept in the dot output
     :return: a dot formatted string
     """
     dot = graphviz.Digraph(node_attr={'shape': 'plaintext'})
 
-    _add_tree_to_dot(tree_root, dot, id_selector)
+    _add_tree_to_dot(tree_root, dot, id_selector, field_filter)
     return dot.source
 
 
-def _add_tree_to_dot(tree_root, dot, id_selector):
+def _add_tree_to_dot(tree_root, dot, id_selector, field_filter):
     """Update the graph with the current given tree
 
     :param tree_root: the root of the tree to be added
     :param dot: the graph to be updated
     :param id_selector: TreeNode -> scalar function that selects provides the
                         unique id of the node
+    :param field_filter: field_name -> bool function that returns True for
+                         fields that need to be kept in the dot output
     """
 
     def add_node(node):
-        dot.node(id_selector(node), _get_attr_html(node.data))
+        node_data = {key: value
+                     for key, value in node.data.items()
+                     if field_filter(key)}
+        dot.node(id_selector(node), _get_attr_html(node_data))
 
     def add_edges(node):
         for child in node.children:

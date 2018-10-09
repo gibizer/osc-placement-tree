@@ -12,13 +12,11 @@
 
 import json
 import subprocess
-import tempfile
 
-from graphviz import Source
-from oslotest import base
+from osc_placement_tree.tests import base
 
 
-class TestBase(base.BaseTestCase):
+class TestBase(base.TestBase):
     VERSION = '1.14'
 
     @classmethod
@@ -55,16 +53,6 @@ class TestBase(base.BaseTestCase):
             self.assertIn(
                 message, e.output,
                 'Command "%s" fails with different message' % e.cmd)
-
-    def assertDot(self, dot_src):
-        """Generates the diagram in the background to verify syntax
-
-        :param dot_src: the dot source string
-        """
-        dot = Source(dot_src)
-        # This will raise CalledProcessError if the given source has a syntax
-        # error
-        dot.render(tempfile.mktemp())
 
     def create_rp(self, rp_uuid, parent_rp_uuid=None):
         parent = ('--parent-provider %s' % parent_rp_uuid

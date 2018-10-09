@@ -36,6 +36,13 @@ class ShowProviderTree(command.Command):
             metavar='<name>',
             help='UUID of one of the provider in the tree to show'
         )
+        parser.add_argument(
+            '--fields',
+            metavar='<fields>',
+            help='The coma separated list of field names of the resource '
+                 'provider to include in the output.',
+            default=''
+        )
 
         return parser
 
@@ -47,9 +54,15 @@ class ShowProviderTree(command.Command):
             parsed_args.uuid,
             drop_fields=['links', 'resource_provider_generation'])
 
+        field_filter = lambda name: True
+        if parsed_args.fields:
+            fields = parsed_args.fields.split(',')
+            field_filter = lambda name: name in fields
+
         print(
             dot.tree_to_dot(tree_root,
-                            id_selector=lambda node: node.data['uuid']))
+                            id_selector=lambda node: node.data['uuid'],
+                            field_filter=field_filter))
 
 
 class ListProviderTree(command.Command):
@@ -57,6 +70,14 @@ class ListProviderTree(command.Command):
 
     def get_parser(self, prog_name):
         parser = super(ListProviderTree, self).get_parser(prog_name)
+        parser.add_argument(
+            '--fields',
+            metavar='<fields>',
+            help='The coma separated list of field names of the resource '
+                 'provider to include in the output.',
+            default=''
+        )
+
         return parser
 
     def take_action(self, parsed_args):
@@ -66,6 +87,12 @@ class ListProviderTree(command.Command):
             ClientAdapter(http),
             drop_fields=['links', 'resource_provider_generation'])
 
+        field_filter = lambda name: True
+        if parsed_args.fields:
+            fields = parsed_args.fields.split(',')
+            field_filter = lambda name: name in fields
+
         print(
             dot.trees_to_dot(tree_roots,
-                             id_selector=lambda node: node.data['uuid']))
+                             id_selector=lambda node: node.data['uuid'],
+                             field_filter=field_filter))

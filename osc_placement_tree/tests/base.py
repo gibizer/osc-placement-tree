@@ -9,6 +9,7 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+import os
 import tempfile
 
 from graphviz import Source
@@ -25,4 +26,9 @@ class TestBase(base.BaseTestCase):
         dot = Source(dot_src)
         # This will raise CalledProcessError if the given source has a syntax
         # error
-        dot.render(tempfile.mktemp())
+
+        if 'OS_TEST_SAVE_DOT' in os.environ and os.environ['OS_TEST_SAVE_DOT']:
+            file = self.id()
+        else:
+            file = tempfile.mktemp()
+        dot.render(file)

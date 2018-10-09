@@ -84,7 +84,7 @@ def make_rp_tree(client, in_tree_rp_uuid, drop_fields=None):
     url = '/resource_providers?in_tree=%s' % in_tree_rp_uuid
     rps_in_tree = client.get(url)['resource_providers']
     if not rps_in_tree:
-        return None
+        raise ValueError('%s does not exists' % in_tree_rp_uuid)
 
     rps = _extend_placement_rps(rps_in_tree, client, drop_fields=drop_fields)
     nodes = _wrap_placement_rps_into_tree_nodes(rps)

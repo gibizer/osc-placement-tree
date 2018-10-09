@@ -9,6 +9,7 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+import subprocess
 
 from osc_placement_tree.tests.functional import base
 from osc_placement_tree.tests import uuids
@@ -73,6 +74,13 @@ class TestProviderTree(base.TestBase):
                                  '--fields uuid,name'
                                  % uuids.compute0_with_disk)
         self.assertDot(dot_src)
+
+    def test_provider_tree_show_not_existing_uuid(self):
+        ex = self.assertRaises(
+            subprocess.CalledProcessError,
+            self.openstack,
+            'resource provider tree show %s' % uuids.not_existing_rp)
+        self.assertIn('does not exists', ex.output)
 
     def test_provider_tree_list(self):
         dot_src = self.openstack('resource provider tree list')

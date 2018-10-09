@@ -24,8 +24,9 @@ class TestTree(base.BaseTestCase):
         mock_client.get.return_value = {
             'resource_providers': []}
 
-        tree_root = tree.make_rp_tree(mock_client, uuids.root_rp_A)
-        self.assertEqual(None, tree_root)
+        self.assertRaises(
+            ValueError,
+            tree.make_rp_tree, mock_client, uuids.root_rp_A)
         mock_client.get.assert_any_call(
             '/resource_providers?in_tree=%s' % uuids.root_rp_A)
 

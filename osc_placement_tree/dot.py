@@ -65,7 +65,7 @@ def _add_tree_to_dot(tree_root, dot, id_selector, field_filter):
 
     def add_edges(node):
         for child in node.children:
-            dot.edge(id_selector(node), id_selector(child))
+            dot.edge(id_selector(node), id_selector(child), dir='back')
 
     tree_root.walk(add_node)
     tree_root.walk(add_edges)

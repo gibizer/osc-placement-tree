@@ -45,9 +45,9 @@ class TestDot(base.TestBase):
              mock.call('4', some_html)],
             mock_add_node.mock_calls)
         self.assertEqual(
-            [mock.call('1', '2'),
-             mock.call('1', '3'),
-             mock.call('3', '4')],
+            [mock.call('1', '2', dir='back'),
+             mock.call('1', '3', dir='back'),
+             mock.call('3', '4', dir='back')],
             mock_add_edge.mock_calls)
 
     @mock.patch('graphviz.dot.Dot.node')

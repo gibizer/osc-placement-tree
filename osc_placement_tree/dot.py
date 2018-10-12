@@ -79,7 +79,7 @@ def _get_attr_html(data_dict, field_filter):
 
 
 def _get_html_scalar(scalar):
-    return '<TD  ALIGN="LEFT">%s</TD>' % scalar
+    return '<TD  ALIGN="LEFT" BALIGN="LEFT">%s</TD>' % scalar
 
 
 def _get_html_dict(a_dict, field_filter):

@@ -9,6 +9,7 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+import operator
 
 import graphviz
 
@@ -86,7 +87,7 @@ def _get_html_dict(a_dict):
 
     attrs = ('<TABLE BORDER="0" CELLBORDER="1" '
              'CELLSPACING="0" CELLPADDING="4">\n')
-    for key, value in a_dict.items():
+    for key, value in sorted(a_dict.items(), key=operator.itemgetter(0)):
         attrs += _get_html_key_value(key, value)
     attrs += '</TABLE>\n'
     return attrs

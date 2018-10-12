@@ -70,3 +70,24 @@ class TestDot(base.TestBase):
             [mock.call({'id': '1', 'name': 'root'}),
              mock.call({'id': '2', 'name': 'child'})],
             mock_get_attr_html.mock_calls)
+
+    @mock.patch('osc_placement_tree.dot._get_html_key_value')
+    def test_get_html_dict_sorts_fields(self, mock_get_html_key_value):
+        mock_get_html_key_value.side_effect = ['', '', '', '', '']
+        a_dict = {
+            'foo': 1,
+            'bar': 2,
+            'foobar': 3,
+            'zero': 4,
+            'apple': 5
+        }
+        dot._get_html_dict(a_dict)
+        self.assertEqual(
+            [
+                mock.call('apple', 5),
+                mock.call('bar', 2),
+                mock.call('foo', 1),
+                mock.call('foobar', 3),
+                mock.call('zero', 4),
+            ],
+            mock_get_html_key_value.mock_calls)

@@ -27,6 +27,9 @@ DROP_DATA_FIELDS = [
 DEFAULT_HIDDEN_FIELDS = [
     'generation',
     'resource_provider_generation',
+    'min_unit',
+    'max_unit',
+    'step_size',
 ]
 
 

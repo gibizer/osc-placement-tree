@@ -51,9 +51,10 @@ class TestDot(base.TestBase):
             mock_add_edge.mock_calls)
 
     @mock.patch('graphviz.dot.Dot.node')
-    @mock.patch('osc_placement_tree.dot._get_attr_html')
+    @mock.patch('osc_placement_tree.dot._get_html_key_value')
     def test_tree_to_dot_filters_node_data(
-            self, mock_get_attr_html, mock_add_node):
+            self, mock_get_html_key_value, mock_add_node):
+        mock_get_html_key_value.return_value = ''
         child = tree.TreeNode(
             {'id': '2', 'name': 'child', 'not_needed_field': 42},
             children=[])
@@ -61,15 +62,18 @@ class TestDot(base.TestBase):
             {'id': '1', 'name': 'root', 'not_needed_field': 42},
             children=[child])
 
+        filter = lambda name: name in ['id', 'name']
         dot.tree_to_dot(
             root,
             id_selector=lambda n: n.data['id'],
-            field_filter=lambda name: name in ['id', 'name'])
+            field_filter=filter)
 
         self.assertEqual(
-            [mock.call({'id': '1', 'name': 'root'}),
-             mock.call({'id': '2', 'name': 'child'})],
-            mock_get_attr_html.mock_calls)
+            [mock.call('id', '1', filter),
+             mock.call('name', 'root', filter),
+             mock.call('id', '2', filter),
+             mock.call('name', 'child', filter)],
+            mock_get_html_key_value.mock_calls)
 
     @mock.patch('osc_placement_tree.dot._get_html_key_value')
     def test_get_html_dict_sorts_fields(self, mock_get_html_key_value):
@@ -81,13 +85,14 @@ class TestDot(base.TestBase):
             'zero': 4,
             'apple': 5
         }
-        dot._get_html_dict(a_dict)
+        filter = lambda _: True
+        dot._get_html_dict(a_dict, filter)
         self.assertEqual(
             [
-                mock.call('apple', 5),
-                mock.call('bar', 2),
-                mock.call('foo', 1),
-                mock.call('foobar', 3),
-                mock.call('zero', 4),
+                mock.call('apple', 5, filter),
+                mock.call('bar', 2, filter),
+                mock.call('foo', 1, filter),
+                mock.call('foobar', 3, filter),
+                mock.call('zero', 4, filter),
             ],
             mock_get_html_key_value.mock_calls)

@@ -59,10 +59,7 @@ def _add_tree_to_dot(tree_root, dot, id_selector, field_filter):
     """
 
     def add_node(node):
-        node_data = {key: value
-                     for key, value in node.data.items()
-                     if field_filter(key)}
-        dot.node(id_selector(node), _get_attr_html(node_data))
+        dot.node(id_selector(node), _get_attr_html(node.data, field_filter))
 
     def add_edges(node):
         for child in node.children:
@@ -76,8 +73,8 @@ def _add_tree_to_dot(tree_root, dot, id_selector, field_filter):
     tree_root.walk(add_edges)
 
 
-def _get_attr_html(data_dict):
-    html_str = _get_html_dict(data_dict)
+def _get_attr_html(data_dict, field_filter):
+    html_str = _get_html_dict(data_dict, field_filter)
     return '<' + html_str + '>'
 
 
@@ -85,19 +82,20 @@ def _get_html_scalar(scalar):
     return '<TD  ALIGN="LEFT">%s</TD>' % scalar
 
 
-def _get_html_dict(a_dict):
+def _get_html_dict(a_dict, field_filter):
     if not a_dict:
         return '{}'
 
     attrs = ('<TABLE BORDER="0" CELLBORDER="1" '
              'CELLSPACING="0" CELLPADDING="4">\n')
     for key, value in sorted(a_dict.items(), key=operator.itemgetter(0)):
-        attrs += _get_html_key_value(key, value)
+        if field_filter(key):
+            attrs += _get_html_key_value(key, value, field_filter)
     attrs += '</TABLE>\n'
     return attrs
 
 
-def _get_html_value(value):
+def _get_html_value(value, field_filter):
     if isinstance(value, list):
         if not value:
             return _get_html_scalar('[]')
@@ -105,11 +103,14 @@ def _get_html_value(value):
         # assuming that list items are scalars
         return _get_html_scalar('<BR/>'.join(value))
     elif isinstance(value, dict):
-        return _get_html_scalar(_get_html_dict(value))
+        return _get_html_scalar(_get_html_dict(value, field_filter))
     else:  # assuming scalar
         return _get_html_scalar(value)
 
 
-def _get_html_key_value(key, value):
+def _get_html_key_value(key, value, field_filter):
     # assuming that the key is scalar
-    return '<TR>' + _get_html_scalar(key) + _get_html_value(value) + '</TR>\n'
+    return ('<TR>' +
+            _get_html_scalar(key) +
+            _get_html_value(value, field_filter) +
+            '</TR>\n')

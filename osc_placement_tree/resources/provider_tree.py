@@ -22,6 +22,13 @@ DROP_DATA_FIELDS = [
     'parent_provider_uuid',  # represented by node relationships
     'root_provider_uuid']  # unused
 
+# These fields are not included in the generated output if they are not
+# explicitly requested by the user
+DEFAULT_HIDDEN_FIELDS = [
+    'generation',
+    'resource_provider_generation',
+]
+
 
 class ClientAdapter(object):
     def __init__(self, client):
@@ -29,6 +36,14 @@ class ClientAdapter(object):
 
     def get(self, url):
         return self.client.request('GET', url).json()
+
+
+def _get_field_filter(parsed_args):
+    if parsed_args.fields:
+        fields = parsed_args.fields.split(',')
+        return lambda name: name in fields
+    else:
+        return lambda name: name not in DEFAULT_HIDDEN_FIELDS
 
 
 # This inherits directly from cliff as it wants to emit other than a simple
@@ -62,15 +77,10 @@ class ShowProviderTree(command.Command):
             parsed_args.uuid,
             drop_fields=DROP_DATA_FIELDS)
 
-        field_filter = lambda name: True
-        if parsed_args.fields:
-            fields = parsed_args.fields.split(',')
-            field_filter = lambda name: name in fields
-
         print(
             dot.tree_to_dot(tree_root,
                             id_selector=lambda node: node.data['uuid'],
-                            field_filter=field_filter))
+                            field_filter=_get_field_filter(parsed_args)))
 
 
 class ListProviderTree(command.Command):
@@ -95,12 +105,7 @@ class ListProviderTree(command.Command):
             ClientAdapter(http),
             drop_fields=DROP_DATA_FIELDS)
 
-        field_filter = lambda name: True
-        if parsed_args.fields:
-            fields = parsed_args.fields.split(',')
-            field_filter = lambda name: name in fields
-
         print(
             dot.trees_to_dot(tree_roots,
                              id_selector=lambda node: node.data['uuid'],
-                             field_filter=field_filter))
+                             field_filter=_get_field_filter(parsed_args)))

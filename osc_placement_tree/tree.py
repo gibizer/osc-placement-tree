@@ -39,8 +39,8 @@ def _build_tree(all_nodes, current_node):
         _build_tree(all_nodes, node)
 
 
-def _extend_placement_rps(rps, client, drop_fields=None):
-    return [_extend_rp_data(client, rp, drop_fields) for rp in rps]
+def _extend_placement_rps(rps, client):
+    return [_extend_rp_data(client, rp) for rp in rps]
 
 
 def _wrap_placement_rps_into_tree_nodes(rps):
@@ -50,6 +50,13 @@ def _wrap_placement_rps_into_tree_nodes(rps):
 def _get_roots(nodes):
     return [node for node in nodes
             if node.data['parent_provider_uuid'] is None]
+
+
+def _drop_fields(drop_fields, nodes):
+    if drop_fields:
+        for node in nodes:
+            for field in drop_fields:
+                node.data.pop(field)
 
 
 def make_rp_trees(client, drop_fields=None):
@@ -63,12 +70,14 @@ def make_rp_trees(client, drop_fields=None):
     url = '/resource_providers'
     rps = client.get(url)['resource_providers']
 
-    rps = _extend_placement_rps(rps, client, drop_fields=drop_fields)
+    rps = _extend_placement_rps(rps, client)
     nodes = _wrap_placement_rps_into_tree_nodes(rps)
     roots = _get_roots(nodes)
 
     for root in roots:
         _build_tree(nodes, root)
+
+    _drop_fields(drop_fields, nodes)
     return roots
 
 
@@ -78,6 +87,7 @@ def make_rp_tree(client, in_tree_rp_uuid, drop_fields=None):
     :param client: a placement client providing a get(url) call that returns
                    the REST response body as a python object
     :param in_tree_rp_uuid: an RP uuid from the RP tree that is requested
+    :param drop_fields: the list of field names not to include in the result
     :return: a TreeNode object that is the root
     """
 
@@ -86,19 +96,17 @@ def make_rp_tree(client, in_tree_rp_uuid, drop_fields=None):
     if not rps_in_tree:
         raise ValueError('%s does not exists' % in_tree_rp_uuid)
 
-    rps = _extend_placement_rps(rps_in_tree, client, drop_fields=drop_fields)
+    rps = _extend_placement_rps(rps_in_tree, client)
     nodes = _wrap_placement_rps_into_tree_nodes(rps)
     root = _get_roots(nodes)[0]
 
     _build_tree(nodes, root)
+    _drop_fields(drop_fields, nodes)
     return root
 
 
-def _extend_rp_data(client, rp, drop_fields):
+def _extend_rp_data(client, rp):
     rp.update(client.get('/resource_providers/%s/inventories' % rp['uuid']))
     rp.update(client.get('/resource_providers/%s/traits' % rp['uuid']))
     rp.update(client.get('/resource_providers/%s/aggregates' % rp['uuid']))
-    if drop_fields:
-        for field in drop_fields:
-            rp.pop(field)
     return rp

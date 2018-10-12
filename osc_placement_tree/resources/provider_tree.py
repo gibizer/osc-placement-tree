@@ -14,6 +14,14 @@ from cliff import command
 from osc_placement_tree import dot
 from osc_placement_tree import tree
 
+# These fields are provided by placement but after processing they are
+# represented by the model itself so these fields can be dropped from the data
+# store
+DROP_DATA_FIELDS = [
+    'links',  # unused
+    'parent_provider_uuid',  # represented by node relationships
+    'root_provider_uuid']  # unused
+
 
 class ClientAdapter(object):
     def __init__(self, client):
@@ -52,7 +60,7 @@ class ShowProviderTree(command.Command):
         tree_root = tree.make_rp_tree(
             ClientAdapter(http),
             parsed_args.uuid,
-            drop_fields=['links', 'resource_provider_generation'])
+            drop_fields=DROP_DATA_FIELDS)
 
         field_filter = lambda name: True
         if parsed_args.fields:
@@ -85,7 +93,7 @@ class ListProviderTree(command.Command):
 
         tree_roots = tree.make_rp_trees(
             ClientAdapter(http),
-            drop_fields=['links', 'resource_provider_generation'])
+            drop_fields=DROP_DATA_FIELDS)
 
         field_filter = lambda name: True
         if parsed_args.fields:

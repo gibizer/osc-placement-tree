@@ -21,6 +21,10 @@ class TestProviderTree(base.TestBase):
         super(TestProviderTree, self).setUp()
 
         self.create_rp('compute0_with_disk')
+        self.set_traits('compute0_with_disk',
+                        ['HW_CPU_X86_SSE2',
+                         'HW_CPU_X86_SSE',
+                         'HW_CPU_X86_MMX'])
         self.create_rp('compute0_with_disk_NUMA0',
                        parent_rp_name='compute0_with_disk')
         self.create_rp('compute0_with_disk_NUMA1',
@@ -43,6 +47,8 @@ class TestProviderTree(base.TestBase):
                               'MEMORY_MB=16384')
 
         self.create_rp('compute1_with_disk')
+        self.set_traits('compute1_with_disk',
+                        ['HW_CPU_X86_MMX'])
         self.create_rp('compute1_with_disk_NUMA0',
                        parent_rp_name='compute1_with_disk')
         self.create_rp('compute1_with_disk_NUMA1',
@@ -63,6 +69,16 @@ class TestProviderTree(base.TestBase):
                               'VCPU=8',
                               'VCPU:allocation_ratio=16.0',
                               'MEMORY_MB=16384')
+
+        self.set_aggregate('compute0_with_disk',
+                           [uuids.host_aggregate1, uuids.agg2])
+        self.set_aggregate('compute1_with_disk',
+                           [uuids.host_aggregate1, uuids.agg2])
+
+        self.set_aggregate('compute0_with_disk_NUMA0', [uuids.agg2])
+        self.set_aggregate('compute0_with_disk_NUMA1', [uuids.agg2])
+        self.set_aggregate('compute1_with_disk_NUMA0', [uuids.agg2])
+        self.set_aggregate('compute1_with_disk_NUMA1', [uuids.agg2])
 
     def test_provider_tree_show(self):
         dot_src = self.openstack('resource provider tree show %s' %

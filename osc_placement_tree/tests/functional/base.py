@@ -75,3 +75,17 @@ class TestBase(base.TestBase):
             uuid=getattr(uuids, rp_name), resources=' '.join(
                 ['--resource %s' % r for r in resources]))
         return self.openstack(cmd, use_json=True)
+
+    def set_traits(self, rp_name, traits):
+        traits_str = ''
+        for trait in traits:
+            traits_str += ' --trait %s' % trait
+        self.openstack('resource provider trait set %s %s' %
+                       (getattr(uuids, rp_name), traits_str))
+
+    def set_aggregate(self, rp_name, aggregate_uuids):
+        aggregate_str = ''
+        for agg in aggregate_uuids:
+            aggregate_str += ' --aggregate %s' % agg
+        self.openstack('resource provider aggregate set %s %s' %
+                       (getattr(uuids, rp_name), aggregate_str))

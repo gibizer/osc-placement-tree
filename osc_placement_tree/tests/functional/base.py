@@ -14,6 +14,7 @@ import json
 import subprocess
 
 from osc_placement_tree.tests import base
+from osc_placement_tree.tests import uuids
 
 
 class TestBase(base.TestBase):
@@ -54,18 +55,23 @@ class TestBase(base.TestBase):
                 message, e.output,
                 'Command "%s" fails with different message' % e.cmd)
 
-    def create_rp(self, rp_uuid, parent_rp_uuid=None):
+    def create_rp(self, rp_name, parent_rp_name=None):
+        parent_rp_uuid = None
+        if parent_rp_name:
+            parent_rp_uuid = getattr(uuids, parent_rp_name)
+
         parent = ('--parent-provider %s' % parent_rp_uuid
                   if parent_rp_uuid else '')
-        self.openstack(('resource provider create %(uuid)s --uuid %(uuid)s ' %
-                       {'uuid': rp_uuid}) + parent)
-        self.addCleanup(lambda: self.delete_rp(rp_uuid))
+        self.openstack(('resource provider create %(name)s --uuid %(uuid)s ' %
+                       {'name': rp_name,
+                        'uuid': getattr(uuids, rp_name)}) + parent)
+        self.addCleanup(lambda: self.delete_rp(getattr(uuids, rp_name)))
 
     def delete_rp(self, rp_uuid):
         self.openstack('resource provider delete %s' % rp_uuid)
 
-    def update_inventory(self, rp_uuid, *resources):
+    def update_inventory(self, rp_name, *resources):
         cmd = 'resource provider inventory set {uuid} {resources}'.format(
-            uuid=rp_uuid, resources=' '.join(
+            uuid=getattr(uuids, rp_name), resources=' '.join(
                 ['--resource %s' % r for r in resources]))
         return self.openstack(cmd, use_json=True)

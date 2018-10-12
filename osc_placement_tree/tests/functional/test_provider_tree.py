@@ -20,46 +20,46 @@ class TestProviderTree(base.TestBase):
     def setUp(self):
         super(TestProviderTree, self).setUp()
 
-        self.create_rp(uuids.compute0_with_disk)
-        self.create_rp(uuids.compute0_with_disk_NUMA0,
-                       parent_rp_uuid=uuids.compute0_with_disk)
-        self.create_rp(uuids.compute0_with_disk_NUMA1,
-                       parent_rp_uuid=uuids.compute0_with_disk)
+        self.create_rp('compute0_with_disk')
+        self.create_rp('compute0_with_disk_NUMA0',
+                       parent_rp_name='compute0_with_disk')
+        self.create_rp('compute0_with_disk_NUMA1',
+                       parent_rp_name='compute0_with_disk')
 
-        self.update_inventory(uuids.compute0_with_disk,
+        self.update_inventory('compute0_with_disk',
                               'DISK_GB=256',
                               'DISK_GB:reserved=16')
 
-        self.update_inventory(uuids.compute0_with_disk_NUMA0,
+        self.update_inventory('compute0_with_disk_NUMA0',
                               'VCPU=4',
                               'VCPU:allocation_ratio=16.0',
                               'VCPU:reserved=1',
                               'MEMORY_MB=16384',
                               'MEMORY_MB:reserved=1024')
 
-        self.update_inventory(uuids.compute0_with_disk_NUMA1,
+        self.update_inventory('compute0_with_disk_NUMA1',
                               'VCPU=4',
                               'VCPU:allocation_ratio=16.0',
                               'MEMORY_MB=16384')
 
-        self.create_rp(uuids.compute1_with_disk)
-        self.create_rp(uuids.compute1_with_disk_NUMA0,
-                       parent_rp_uuid=uuids.compute1_with_disk)
-        self.create_rp(uuids.compute1_with_disk_NUMA1,
-                       parent_rp_uuid=uuids.compute1_with_disk)
+        self.create_rp('compute1_with_disk')
+        self.create_rp('compute1_with_disk_NUMA0',
+                       parent_rp_name='compute1_with_disk')
+        self.create_rp('compute1_with_disk_NUMA1',
+                       parent_rp_name='compute1_with_disk')
 
-        self.update_inventory(uuids.compute1_with_disk,
+        self.update_inventory('compute1_with_disk',
                               'DISK_GB=128',
                               'DISK_GB:reserved=16')
 
-        self.update_inventory(uuids.compute1_with_disk_NUMA0,
+        self.update_inventory('compute1_with_disk_NUMA0',
                               'VCPU=8',
                               'VCPU:allocation_ratio=16.0',
                               'VCPU:reserved=1',
                               'MEMORY_MB=16384',
                               'MEMORY_MB:reserved=1024')
 
-        self.update_inventory(uuids.compute1_with_disk_NUMA1,
+        self.update_inventory('compute1_with_disk_NUMA1',
                               'VCPU=8',
                               'VCPU:allocation_ratio=16.0',
                               'MEMORY_MB=16384')

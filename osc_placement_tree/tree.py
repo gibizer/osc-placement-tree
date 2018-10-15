@@ -9,54 +9,42 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
-
-
-class TreeNode(object):
-    """The wrapper for a tree node"""
-
-    def __init__(self, data, children=None):
-        """Create a TreeNode
-
-        :param data: the object at the current Tree node
-        :param children: the connected Tree nodes
-        """
-        self.data = data
-        self.children = [] if not children else children
-
-    def walk(self, func):
-        func(self)
-        for child in self.children:
-            child.walk(func)
-
-
-def _build_tree(all_nodes, current_node):
-    """Do a recursive breadth-first walk of the tree and build relationships"""
-    children = [node for node in all_nodes
-                if (node.data['parent_provider_uuid'] ==
-                    current_node.data['uuid'])]
-    current_node.children = children
-    for node in children:
-        _build_tree(all_nodes, node)
-
-
-def _extend_placement_rps(rps, client):
-    return [_extend_rp_data(client, rp) for rp in rps]
-
-
-def _wrap_placement_rps_into_tree_nodes(rps):
-    return [TreeNode(data=rp) for rp in rps]
-
-
-def _get_roots(nodes):
-    return [node for node in nodes
-            if node.data['parent_provider_uuid'] is None]
+from osc_placement_tree import graph
 
 
 def _drop_fields(drop_fields, nodes):
     if drop_fields:
         for node in nodes:
             for field in drop_fields:
-                node.data.pop(field)
+                node.pop(field)
+
+
+def _get_node_by_id(id, nodes):
+    for node in nodes:
+        if node.id() == id:
+            return node
+    raise ValueError('Node %s not found' % id)
+
+
+def _get_parent_edges_between_rp_nodes(nodes):
+    edges = []
+    for node in nodes:
+        if node.data['parent_provider_uuid']:
+            parent_node = _get_node_by_id(
+                node.data['parent_provider_uuid'], nodes)
+            edges.append(graph.ParentEdge(node, parent_node))
+    return edges
+
+
+def _make_graph_from_rps(rps, drop_fields):
+    nodes = [graph.RpNode(rp) for rp in rps]
+    parent_edges = _get_parent_edges_between_rp_nodes(nodes)
+    # TODO(gibi) handle consumer nodes and edges here
+
+    # this is done late so we can drop parent_provider_uuid as well that is
+    # still used above but not any more
+    _drop_fields(drop_fields, rps)
+    return graph.Graph(nodes=nodes, edges=parent_edges)
 
 
 def make_rp_trees(client, drop_fields=None):
@@ -65,20 +53,12 @@ def make_rp_trees(client, drop_fields=None):
     :param client: a placement client providing a get(url) call that returns
                    the REST response body as a python object
     :param drop_fields: the list of field names not to include in the result
-    :return: a list of TreeNode objects
+    :return: a list of Node objects
     """
     url = '/resource_providers'
     rps = client.get(url)['resource_providers']
-
     rps = _extend_placement_rps(rps, client)
-    nodes = _wrap_placement_rps_into_tree_nodes(rps)
-    roots = _get_roots(nodes)
-
-    for root in roots:
-        _build_tree(nodes, root)
-
-    _drop_fields(drop_fields, nodes)
-    return roots
+    return _make_graph_from_rps(rps, drop_fields)
 
 
 def make_rp_tree(client, in_tree_rp_uuid, drop_fields=None):
@@ -88,21 +68,19 @@ def make_rp_tree(client, in_tree_rp_uuid, drop_fields=None):
                    the REST response body as a python object
     :param in_tree_rp_uuid: an RP uuid from the RP tree that is requested
     :param drop_fields: the list of field names not to include in the result
-    :return: a TreeNode object that is the root
+    :return: a Node object that is the root
     """
 
     url = '/resource_providers?in_tree=%s' % in_tree_rp_uuid
     rps_in_tree = client.get(url)['resource_providers']
     if not rps_in_tree:
         raise ValueError('%s does not exists' % in_tree_rp_uuid)
-
     rps = _extend_placement_rps(rps_in_tree, client)
-    nodes = _wrap_placement_rps_into_tree_nodes(rps)
-    root = _get_roots(nodes)[0]
+    return _make_graph_from_rps(rps, drop_fields)
 
-    _build_tree(nodes, root)
-    _drop_fields(drop_fields, nodes)
-    return root
+
+def _extend_placement_rps(rps, client):
+    return [_extend_rp_data(client, rp) for rp in rps]
 
 
 def _extend_rp_data(client, rp):

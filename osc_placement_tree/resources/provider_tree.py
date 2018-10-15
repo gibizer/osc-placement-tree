@@ -75,15 +75,15 @@ class ShowProviderTree(command.Command):
     def take_action(self, parsed_args):
         http = self.app.client_manager.placement_tree
 
-        tree_root = tree.make_rp_tree(
+        graph = tree.make_rp_tree(
             ClientAdapter(http),
             parsed_args.uuid,
             drop_fields=DROP_DATA_FIELDS)
 
         print(
-            dot.tree_to_dot(tree_root,
-                            id_selector=lambda node: node.data['uuid'],
-                            field_filter=_get_field_filter(parsed_args)))
+            dot.graph_to_dot(
+                graph,
+                field_filter=_get_field_filter(parsed_args)))
 
 
 class ListProviderTree(command.Command):
@@ -104,11 +104,11 @@ class ListProviderTree(command.Command):
     def take_action(self, parsed_args):
         http = self.app.client_manager.placement_tree
 
-        tree_roots = tree.make_rp_trees(
+        graph = tree.make_rp_trees(
             ClientAdapter(http),
             drop_fields=DROP_DATA_FIELDS)
 
         print(
-            dot.trees_to_dot(tree_roots,
-                             id_selector=lambda node: node.data['uuid'],
-                             field_filter=_get_field_filter(parsed_args)))
+            dot.graph_to_dot(
+                graph,
+                field_filter=_get_field_filter(parsed_args)))

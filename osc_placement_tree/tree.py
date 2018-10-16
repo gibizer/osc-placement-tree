@@ -88,3 +88,49 @@ def _extend_rp_data(client, rp):
     rp.update(client.get('/resource_providers/%s/traits' % rp['uuid']))
     rp.update(client.get('/resource_providers/%s/aggregates' % rp['uuid']))
     return rp
+
+
+def _get_consumer_nodes(client, rp_uuids):
+    """Return every consumer that allocates from the given rp_uuids
+
+        :returns: a list of ConsumerNode objects
+    """
+    # need to get all the consumers from every RP and merged them as a single
+    # consumer might allocate from more than one RP and placement doesn't have
+    # a standalone consumer endpoint
+    consumer_uuids = set()
+    for rp_uuid in rp_uuids:
+        consumers = client.get(
+            '/resource_providers/%s/allocations' %
+            rp_uuid)['allocations'].keys()
+        consumer_uuids = consumer_uuids.union(consumers)
+    # now get consumers one by one
+    consumers = {}
+    for consumer_uuid in consumer_uuids:
+        consumers[consumer_uuid] = client.get(
+            '/allocations/%s' % consumer_uuid)
+        # extend that data with its own id
+        consumers[consumer_uuid]['consumer_uuid'] = consumer_uuid
+    return [graph.ConsumerNode(data=consumer)
+            for consumer in consumers.values()]
+
+
+def _add_consumers_to_the_graph(g, consumer_nodes):
+    """Extends the graph with the consumer nodes by connecting them to the RPs
+
+    :param g: the current Graph object containing RPs, this will be extended
+              with consumers
+    :param consumer_nodes: a list of ConsumerNode objects allocating from the
+                           RPs in the graph
+    """
+    g.nodes.extend(consumer_nodes)
+    for consumer_node in consumer_nodes:
+        for rp_uuid in consumer_node.data['allocations'].keys():
+            rp_node = g.get_node_by_id(rp_uuid)
+            g.edges.append(graph.AllocationEdge(consumer_node, rp_node))
+
+
+def extend_rp_graph_with_consumers(client, g):
+    rp_uuids = [rp_node.id() for rp_node in g.rp_nodes]
+    consumers = _get_consumer_nodes(client, rp_uuids)
+    _add_consumers_to_the_graph(g, consumers)

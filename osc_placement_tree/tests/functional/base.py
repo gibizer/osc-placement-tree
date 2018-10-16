@@ -89,3 +89,34 @@ class TestBase(base.TestBase):
             aggregate_str += ' --aggregate %s' % agg
         self.openstack('resource provider aggregate set %s %s' %
                        (getattr(uuids, rp_name), aggregate_str))
+
+    def get_project_id(self, project_name):
+        return self.openstack(
+            'project show %s' % project_name, use_json=True)['id']
+
+    def get_user_id(self, user_name):
+        return self.openstack(
+            'user show %s' % user_name, use_json=True)['id']
+
+    def create_allocation(
+            self, consumer_uuid, allocations, project_id, user_id):
+        allocs_str = ' '.join(
+            ['--allocation rp=%s,%s' %
+             (getattr(uuids, rp_name),
+              ','.join(['%s=%s' % (rc, value)
+                        for rc, value in resources.items()]))
+             for rp_name, resources in allocations.items()])
+        cmd = ('--debug resource provider allocation set {consumer_uuid} '
+               '--project-id {project_id} --user-id {user_id} '
+               '{allocations}'
+               ''.format(consumer_uuid=consumer_uuid,
+                         project_id=project_id,
+                         user_id=user_id,
+                         allocations=allocs_str))
+
+        self.openstack(cmd)
+        self.addCleanup(lambda: self.delete_allocation(consumer_uuid))
+
+    def delete_allocation(self, consumer_uuid):
+        self.openstack('resource provider allocation delete %s' %
+                       consumer_uuid)

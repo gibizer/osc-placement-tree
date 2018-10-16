@@ -69,16 +69,26 @@ class ShowProviderTree(command.Command):
                  'provider to include in the output.',
             default=''
         )
-
+        parser.add_argument(
+            '--show_consumers',
+            help='Includes consumers in the result',
+            nargs='?',
+            const=True,
+            default=False
+        )
         return parser
 
     def take_action(self, parsed_args):
         http = self.app.client_manager.placement_tree
+        client = ClientAdapter(http)
 
         graph = tree.make_rp_tree(
-            ClientAdapter(http),
+            client,
             parsed_args.uuid,
             drop_fields=DROP_DATA_FIELDS)
+
+        if parsed_args.show_consumers:
+            tree.extend_rp_graph_with_consumers(client, graph)
 
         print(
             dot.graph_to_dot(
@@ -98,15 +108,25 @@ class ListProviderTree(command.Command):
                  'provider to include in the output.',
             default=''
         )
-
+        parser.add_argument(
+            '--show_consumers',
+            help='Includes consumers in the result',
+            nargs='?',
+            const=True,
+            default=False
+        )
         return parser
 
     def take_action(self, parsed_args):
         http = self.app.client_manager.placement_tree
+        client = ClientAdapter(http)
 
         graph = tree.make_rp_trees(
-            ClientAdapter(http),
+            client,
             drop_fields=DROP_DATA_FIELDS)
+
+        if parsed_args.show_consumers:
+            tree.extend_rp_graph_with_consumers(client, graph)
 
         print(
             dot.graph_to_dot(

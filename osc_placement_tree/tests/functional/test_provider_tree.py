@@ -9,6 +9,7 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+import os
 import subprocess
 
 from osc_placement_tree.tests.functional import base
@@ -80,6 +81,41 @@ class TestProviderTree(base.TestBase):
         self.set_aggregate('compute1_with_disk_NUMA0', [uuids.agg2])
         self.set_aggregate('compute1_with_disk_NUMA1', [uuids.agg2])
 
+        project_id = self.get_project_id(os.environ['OS_PROJECT_NAME'])
+        user_id = self.get_user_id(os.environ['OS_USERNAME'])
+
+        self.create_allocation(
+            uuids.consumer1,
+            allocations={
+                'compute0_with_disk': {'DISK_GB': 10},
+                'compute0_with_disk_NUMA0': {'VCPU': 1},
+                'compute0_with_disk_NUMA1': {'MEMORY_MB': 1024}
+            },
+            project_id=project_id,
+            user_id=user_id)
+        self.create_allocation(
+            uuids.consumer2,
+            allocations={
+                'compute1_with_disk': {'DISK_GB': 40},
+                'compute1_with_disk_NUMA1': {
+                    'VCPU': 4,
+                    'MEMORY_MB': 8192
+                },
+            },
+            project_id=project_id,
+            user_id=user_id)
+        self.create_allocation(
+            uuids.consumer3,
+            allocations={
+                'compute1_with_disk': {'DISK_GB': 20},
+                'compute1_with_disk_NUMA0': {
+                    'VCPU': 2,
+                    'MEMORY_MB': 4096
+                },
+            },
+            project_id=project_id,
+            user_id=user_id)
+
     def test_provider_tree_show(self):
         dot_src = self.openstack('resource provider tree show %s' %
                                  uuids.compute0_with_disk)
@@ -98,6 +134,12 @@ class TestProviderTree(base.TestBase):
             'resource provider tree show %s' % uuids.not_existing_rp)
         self.assertIn('does not exists', ex.output)
 
+    def test_provider_tree_show_with_consumers(self):
+        dot_src = self.openstack('resource provider tree show %s '
+                                 '--show_consumers'
+                                 % uuids.compute0_with_disk)
+        self.assertDot(dot_src)
+
     def test_provider_tree_list(self):
         dot_src = self.openstack('resource provider tree list')
         self.assertDot(dot_src)
@@ -105,4 +147,9 @@ class TestProviderTree(base.TestBase):
     def test_provider_tree_list_with_fields(self):
         dot_src = self.openstack('resource provider tree list '
                                  '--fields uuid,name,generation')
+        self.assertDot(dot_src)
+
+    def test_provider_tree_list_with_consumers(self):
+        dot_src = self.openstack('resource provider tree list '
+                                 '--show_consumers')
         self.assertDot(dot_src)

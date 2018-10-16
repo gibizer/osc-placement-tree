@@ -39,6 +39,22 @@ class RpNode(Node):
         return self.data['uuid']
 
 
+class ConsumerNode(Node):
+    def _get_node_data(self):
+        import copy
+        data = copy.deepcopy(self.data)
+        data.pop('allocations')
+        return data
+
+    def add_to_dot(self, dot, field_filter):
+        dot.node(
+            self.id(),
+            html._get_attr_html(self._get_node_data(), lambda _: True))
+
+    def id(self):
+        return self.data['consumer_uuid']
+
+
 class Edge(object):
     def __init__(self, node1, node2):
         self.node1 = node1
@@ -66,6 +82,27 @@ class ParentEdge(Edge):
         dot.edge(self.node2.id(), self.node1.id(), dir='back', label='parent')
 
 
+class AllocationEdge(Edge):
+    """A consumer -> rp edge representing an allocation
+
+    node1 should be the ConsumerNode
+    node2 should be the RpNode
+    """
+    def add_to_dot(self, dot):
+        resources = self.node1.data[
+            'allocations'][self.node2.id()]['resources']
+        # To layout the graph in the dot from RPs on the top and consumers
+        # below we need to add the edge reversed
+        dot.edge(
+            self.node2.id(),
+            self.node1.id(),
+            dir='back',
+            label='<' + html._get_html_dict(resources, lambda _: True) + '>',
+            decorate='true',  # connect the label to the edge
+            minlen='2',  # make sure there is space for the label
+            style='dashed')
+
+
 class Graph(object):
     def __init__(self, nodes, edges):
         """Represents a graph
@@ -82,3 +119,15 @@ class Graph(object):
             node.add_to_dot(dot, node_field_filter)
         for edge in self.edges:
             edge.add_to_dot(dot)
+
+    @property
+    def rp_nodes(self):
+        # isintance is ugly, alternatively we could store RpNodes in a separate
+        # list internally.
+        return [node for node in self.nodes if isinstance(node, RpNode)]
+
+    def get_node_by_id(self, id):
+        for node in self.nodes:
+            if node.id() == id:
+                return node
+        raise ValueError('Node with id %s not found in the graph' % id)

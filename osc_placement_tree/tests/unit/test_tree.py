@@ -40,9 +40,10 @@ class TestTree(base.BaseTestCase):
                 ]
             },
             # extending data calls
-            {"call1-key": 1},
-            {"call2-key": 2},
-            {"call3-key": 3},
+            {"inventories": {}},
+            {"traits": []},
+            {"aggregates": []},
+            {"usages": {}},
         ]
 
         graph = tree.make_rp_tree(mock_client, uuids.root_rp_A)
@@ -54,9 +55,9 @@ class TestTree(base.BaseTestCase):
         self.assertEqual(0, len(graph.edges))
         # assert that extended data has been included
         self.assertEqual(uuids.root_rp_A, graph.nodes[0].data["uuid"])
-        self.assertEqual(1, rp.data["call1-key"])
-        self.assertEqual(2, rp.data["call2-key"])
-        self.assertEqual(3, rp.data["call3-key"])
+        self.assertEqual({}, rp.data["inventories"])
+        self.assertEqual([], rp.data["traits"])
+        self.assertEqual([], rp.data["aggregates"])
 
         mock_client.get.assert_any_call(
             "/resource_providers?in_tree=%s" % uuids.root_rp_A
@@ -70,7 +71,10 @@ class TestTree(base.BaseTestCase):
         mock_client.get.assert_any_call(
             "/resource_providers/%s/aggregates" % uuids.root_rp_A
         )
-        self.assertEqual(4, mock_client.get.call_count)
+        mock_client.get.assert_any_call(
+            "/resource_providers/%s/usages" % uuids.root_rp_A
+        )
+        self.assertEqual(5, mock_client.get.call_count)
 
     def test_make_rp_tree_single_root_drop_fields(self):
         mock_client = mock.Mock()
@@ -87,13 +91,14 @@ class TestTree(base.BaseTestCase):
                 ]
             },
             # extending data calls
-            {"call1-key": 1},
-            {"call2-key": 2},
-            {"call3-key": 3},
+            {"inventories": {}},
+            {"traits": []},
+            {"aggregates": []},
+            {"usages": {}},
         ]
 
         graph = tree.make_rp_tree(
-            mock_client, uuids.root_rp_A, drop_fields=["call2-key", "garbage"]
+            mock_client, uuids.root_rp_A, drop_fields=["traits", "garbage"]
         )
 
         self.assertEqual(1, len(graph.nodes))
@@ -103,11 +108,11 @@ class TestTree(base.BaseTestCase):
         self.assertEqual(0, len(graph.edges))
         # assert that extended data has been included but drop_fields keys
         # hasn't
-        self.assertEqual(1, rp.data["call1-key"])
-        self.assertEqual(3, rp.data["call3-key"])
+        self.assertEqual({}, rp.data["inventories"])
+        self.assertEqual([], rp.data["aggregates"])
         self.assertEqual(42, rp.data["not-garbage"])
         self.assertNotIn("garbage", rp.data)
-        self.assertNotIn("call2-key", rp.data)
+        self.assertNotIn("traits", rp.data)
 
         mock_client.get.assert_any_call(
             "/resource_providers?in_tree=%s" % uuids.root_rp_A
@@ -121,7 +126,62 @@ class TestTree(base.BaseTestCase):
         mock_client.get.assert_any_call(
             "/resource_providers/%s/aggregates" % uuids.root_rp_A
         )
-        self.assertEqual(4, mock_client.get.call_count)
+        mock_client.get.assert_any_call(
+            "/resource_providers/%s/usages" % uuids.root_rp_A
+        )
+        self.assertEqual(5, mock_client.get.call_count)
+
+    def test_make_rp_tree_single_root_insert_usages(self):
+        mock_client = mock.Mock()
+        mock_client.get.side_effect = [
+            # in_tree call
+            {
+                "resource_providers": [
+                    {"uuid": uuids.root_rp_A, "parent_provider_uuid": None}
+                ]
+            },
+            # extending data calls
+            {"inventories": {"rc1": {"total": 10}, "rc2": {"total": 100}}},
+            {"traits": []},
+            {"aggregates": []},
+            {"usages": {"rc1": 1, "rc2": 10}},
+        ]
+
+        graph = tree.make_rp_tree(mock_client, uuids.root_rp_A)
+
+        self.assertEqual(1, len(graph.nodes))
+        rp = graph.nodes[0]
+        self.assertEqual(uuids.root_rp_A, rp.data["uuid"])
+
+        self.assertEqual(0, len(graph.edges))
+        # assert that extended data has been included
+        self.assertEqual(uuids.root_rp_A, graph.nodes[0].data["uuid"])
+        self.assertEqual(
+            {
+                "rc1": {"total": 10, "used": 1},
+                "rc2": {"total": 100, "used": 10},
+            },
+            rp.data["inventories"],
+        )
+        self.assertEqual([], rp.data["traits"])
+        self.assertEqual([], rp.data["aggregates"])
+
+        mock_client.get.assert_any_call(
+            "/resource_providers?in_tree=%s" % uuids.root_rp_A
+        )
+        mock_client.get.assert_any_call(
+            "/resource_providers/%s/inventories" % uuids.root_rp_A
+        )
+        mock_client.get.assert_any_call(
+            "/resource_providers/%s/traits" % uuids.root_rp_A
+        )
+        mock_client.get.assert_any_call(
+            "/resource_providers/%s/aggregates" % uuids.root_rp_A
+        )
+        mock_client.get.assert_any_call(
+            "/resource_providers/%s/usages" % uuids.root_rp_A
+        )
+        self.assertEqual(5, mock_client.get.call_count)
 
     def test_make_rp_tree_multiple_levels(self):
         #        A
@@ -130,31 +190,41 @@ class TestTree(base.BaseTestCase):
         #     /   / \
         #    E   F   G
         mock_client = mock.Mock()
-        mock_client.get.return_value = {
-            "resource_providers": [
-                {"uuid": uuids.root_rp_A, "parent_provider_uuid": None},
-                {
-                    "uuid": uuids.child_rp_C,
-                    "parent_provider_uuid": uuids.root_rp_A,
-                },
-                {
-                    "uuid": uuids.child_rp_D,
-                    "parent_provider_uuid": uuids.root_rp_A,
-                },
-                {
-                    "uuid": uuids.grandchild_rp_E,
-                    "parent_provider_uuid": uuids.child_rp_C,
-                },
-                {
-                    "uuid": uuids.grandchild_rp_F,
-                    "parent_provider_uuid": uuids.child_rp_D,
-                },
-                {
-                    "uuid": uuids.grandchild_rp_G,
-                    "parent_provider_uuid": uuids.child_rp_D,
-                },
-            ]
-        }
+        in_tree_call = [
+            {
+                "resource_providers": [
+                    {"uuid": uuids.root_rp_A, "parent_provider_uuid": None},
+                    {
+                        "uuid": uuids.child_rp_C,
+                        "parent_provider_uuid": uuids.root_rp_A,
+                    },
+                    {
+                        "uuid": uuids.child_rp_D,
+                        "parent_provider_uuid": uuids.root_rp_A,
+                    },
+                    {
+                        "uuid": uuids.grandchild_rp_E,
+                        "parent_provider_uuid": uuids.child_rp_C,
+                    },
+                    {
+                        "uuid": uuids.grandchild_rp_F,
+                        "parent_provider_uuid": uuids.child_rp_D,
+                    },
+                    {
+                        "uuid": uuids.grandchild_rp_G,
+                        "parent_provider_uuid": uuids.child_rp_D,
+                    },
+                ]
+            }
+        ]
+        data_extension_calls = [
+            # extending data calls
+            {"inventories": {}},
+            {"traits": []},
+            {"aggregates": []},
+            {"usages": {}},
+        ] * 6  # for each node
+        mock_client.get.side_effect = in_tree_call + data_extension_calls
 
         graph = tree.make_rp_tree(mock_client, uuids.root_rp_A)
 
@@ -199,7 +269,10 @@ class TestTree(base.BaseTestCase):
             mock_client.get.assert_any_call(
                 "/resource_providers/%s/aggregates" % rp
             )
-        self.assertEqual(19, mock_client.get.call_count)
+            mock_client.get.assert_any_call(
+                "/resource_providers/%s/usages" % rp
+            )
+        self.assertEqual(1 + 6 * 4, mock_client.get.call_count)
 
     def test_make_rp_trees_two_simple_root(self):
         mock_client = mock.Mock()
@@ -212,13 +285,15 @@ class TestTree(base.BaseTestCase):
                 ]
             },
             # extending data calls for root_rp_A
-            {"call1-key": 1},
-            {"call2-key": 2},
-            {"call3-key": 3},
+            {"inventories": {}},
+            {"traits": []},
+            {"aggregates": []},
+            {"usages": {}},
             # extending data calls for root_rp_B
-            {"call1-key": 4},
-            {"call2-key": 5},
-            {"call3-key": 6},
+            {"inventories": {}},
+            {"traits": []},
+            {"aggregates": []},
+            {"usages": {}},
         ]
 
         graph = tree.make_rp_trees(mock_client)
@@ -232,8 +307,8 @@ class TestTree(base.BaseTestCase):
             # assert that extended data has been included
             self.assertTrue(
                 all(
-                    node.data[key]
-                    for key in ["call1-key", "call2-key", "call3-key"]
+                    key in node.data
+                    for key in ["inventories", "traits", "aggregates"]
                 )
             )
 
@@ -249,8 +324,11 @@ class TestTree(base.BaseTestCase):
             mock_client.get.assert_any_call(
                 "/resource_providers/%s/aggregates" % uuid
             )
+            mock_client.get.assert_any_call(
+                "/resource_providers/%s/usages" % uuid
+            )
 
-        self.assertEqual(7, mock_client.get.call_count)
+        self.assertEqual(9, mock_client.get.call_count)
 
     @mock.patch("osc_placement_tree.tree._add_consumers_to_the_graph")
     @mock.patch("osc_placement_tree.tree._get_consumer_nodes")

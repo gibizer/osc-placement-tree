@@ -88,6 +88,11 @@ def _extend_rp_data(client, rp):
     rp.update(client.get("/resource_providers/%s/inventories" % rp["uuid"]))
     rp.update(client.get("/resource_providers/%s/traits" % rp["uuid"]))
     rp.update(client.get("/resource_providers/%s/aggregates" % rp["uuid"]))
+
+    usages = client.get("/resource_providers/%s/usages" % rp["uuid"])
+    for rc in rp["inventories"]:
+        rp["inventories"][rc]["used"] = usages["usages"][rc]
+
     return rp
 
 

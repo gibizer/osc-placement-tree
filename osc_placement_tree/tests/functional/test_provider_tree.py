@@ -17,26 +17,34 @@ from osc_placement_tree.tests import uuids
 
 
 class TestProviderTree(base.TestBase):
-    def setUp(self):
-        super(TestProviderTree, self).setUp()
+    @classmethod
+    def setUpClass(cls):
+        super(TestProviderTree, cls).setUpClass()
+        try:
+            cls._create_test_data()
+        except Exception:
+            cls.doClassCleanup()
+            raise
 
-        self.create_rp("compute0_with_disk")
-        self.set_traits(
+    @classmethod
+    def _create_test_data(cls):
+        cls.create_rp("compute0_with_disk")
+        cls.set_traits(
             "compute0_with_disk",
             ["HW_CPU_X86_SSE2", "HW_CPU_X86_SSE", "HW_CPU_X86_MMX"],
         )
-        self.create_rp(
+        cls.create_rp(
             "compute0_with_disk_NUMA0", parent_rp_name="compute0_with_disk"
         )
-        self.create_rp(
+        cls.create_rp(
             "compute0_with_disk_NUMA1", parent_rp_name="compute0_with_disk"
         )
 
-        self.update_inventory(
+        cls.update_inventory(
             "compute0_with_disk", "DISK_GB=256", "DISK_GB:reserved=16"
         )
 
-        self.update_inventory(
+        cls.update_inventory(
             "compute0_with_disk_NUMA0",
             "VCPU=4",
             "VCPU:allocation_ratio=16.0",
@@ -45,27 +53,27 @@ class TestProviderTree(base.TestBase):
             "MEMORY_MB:reserved=1024",
         )
 
-        self.update_inventory(
+        cls.update_inventory(
             "compute0_with_disk_NUMA1",
             "VCPU=4",
             "VCPU:allocation_ratio=16.0",
             "MEMORY_MB=16384",
         )
 
-        self.create_rp("compute1_with_disk")
-        self.set_traits("compute1_with_disk", ["HW_CPU_X86_MMX"])
-        self.create_rp(
+        cls.create_rp("compute1_with_disk")
+        cls.set_traits("compute1_with_disk", ["HW_CPU_X86_MMX"])
+        cls.create_rp(
             "compute1_with_disk_NUMA0", parent_rp_name="compute1_with_disk"
         )
-        self.create_rp(
+        cls.create_rp(
             "compute1_with_disk_NUMA1", parent_rp_name="compute1_with_disk"
         )
 
-        self.update_inventory(
+        cls.update_inventory(
             "compute1_with_disk", "DISK_GB=128", "DISK_GB:reserved=16"
         )
 
-        self.update_inventory(
+        cls.update_inventory(
             "compute1_with_disk_NUMA0",
             "VCPU=8",
             "VCPU:allocation_ratio=16.0",
@@ -74,29 +82,29 @@ class TestProviderTree(base.TestBase):
             "MEMORY_MB:reserved=1024",
         )
 
-        self.update_inventory(
+        cls.update_inventory(
             "compute1_with_disk_NUMA1",
             "VCPU=8",
             "VCPU:allocation_ratio=16.0",
             "MEMORY_MB=16384",
         )
 
-        self.set_aggregate(
+        cls.set_aggregate(
             "compute0_with_disk", [uuids.host_aggregate1, uuids.agg2]
         )
-        self.set_aggregate(
+        cls.set_aggregate(
             "compute1_with_disk", [uuids.host_aggregate1, uuids.agg2]
         )
 
-        self.set_aggregate("compute0_with_disk_NUMA0", [uuids.agg2])
-        self.set_aggregate("compute0_with_disk_NUMA1", [uuids.agg2])
-        self.set_aggregate("compute1_with_disk_NUMA0", [uuids.agg2])
-        self.set_aggregate("compute1_with_disk_NUMA1", [uuids.agg2])
+        cls.set_aggregate("compute0_with_disk_NUMA0", [uuids.agg2])
+        cls.set_aggregate("compute0_with_disk_NUMA1", [uuids.agg2])
+        cls.set_aggregate("compute1_with_disk_NUMA0", [uuids.agg2])
+        cls.set_aggregate("compute1_with_disk_NUMA1", [uuids.agg2])
 
-        project_id = self.get_project_id(os.environ["OS_PROJECT_NAME"])
-        user_id = self.get_user_id(os.environ["OS_USERNAME"])
+        project_id = cls.get_project_id(os.environ["OS_PROJECT_NAME"])
+        user_id = cls.get_user_id(os.environ["OS_USERNAME"])
 
-        self.create_allocation(
+        cls.create_allocation(
             uuids.consumer1,
             allocations={
                 "compute0_with_disk": {"DISK_GB": 10},
@@ -106,7 +114,7 @@ class TestProviderTree(base.TestBase):
             project_id=project_id,
             user_id=user_id,
         )
-        self.create_allocation(
+        cls.create_allocation(
             uuids.consumer2,
             allocations={
                 "compute1_with_disk": {"DISK_GB": 40},
@@ -115,7 +123,7 @@ class TestProviderTree(base.TestBase):
             project_id=project_id,
             user_id=user_id,
         )
-        self.create_allocation(
+        cls.create_allocation(
             uuids.consumer3,
             allocations={
                 "compute1_with_disk": {"DISK_GB": 20},

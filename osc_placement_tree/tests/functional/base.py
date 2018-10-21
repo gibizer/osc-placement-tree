@@ -20,6 +20,23 @@ from osc_placement_tree.tests import uuids
 class TestBase(base.TestBase):
     VERSION = "1.14"
 
+    _cleanups = []
+
+    @classmethod
+    def tearDownClass(cls):
+        super(TestBase, cls).tearDownClass()
+        cls.doClassCleanup()
+
+    @classmethod
+    def doClassCleanup(cls):
+        while cls._cleanups:
+            f = cls._cleanups.pop()
+            f()
+
+    @classmethod
+    def addClassCleanup(cls, f):
+        cls._cleanups.append(f)
+
     @classmethod
     def openstack(cls, cmd, may_fail=False, use_json=False):
         result = None
@@ -57,7 +74,8 @@ class TestBase(base.TestBase):
                 'Command "%s" fails with different message' % e.cmd,
             )
 
-    def create_rp(self, rp_name, parent_rp_name=None):
+    @classmethod
+    def create_rp(cls, rp_name, parent_rp_name=None):
         parent_rp_uuid = None
         if parent_rp_name:
             parent_rp_uuid = getattr(uuids, parent_rp_name)
@@ -65,53 +83,60 @@ class TestBase(base.TestBase):
         parent = (
             "--parent-provider %s" % parent_rp_uuid if parent_rp_uuid else ""
         )
-        self.openstack(
+        cls.openstack(
             (
                 "resource provider create %(name)s --uuid %(uuid)s "
                 % {"name": rp_name, "uuid": getattr(uuids, rp_name)}
             )
             + parent
         )
-        self.addCleanup(lambda: self.delete_rp(getattr(uuids, rp_name)))
+        cls.addClassCleanup(lambda: cls.delete_rp(getattr(uuids, rp_name)))
 
-    def delete_rp(self, rp_uuid):
-        self.openstack("resource provider delete %s" % rp_uuid)
+    @classmethod
+    def delete_rp(cls, rp_uuid):
+        cls.openstack("resource provider delete %s" % rp_uuid)
 
-    def update_inventory(self, rp_name, *resources):
+    @classmethod
+    def update_inventory(cls, rp_name, *resources):
         cmd = "resource provider inventory set {uuid} {resources}".format(
             uuid=getattr(uuids, rp_name),
             resources=" ".join(["--resource %s" % r for r in resources]),
         )
-        return self.openstack(cmd, use_json=True)
+        return cls.openstack(cmd, use_json=True)
 
-    def set_traits(self, rp_name, traits):
+    @classmethod
+    def set_traits(cls, rp_name, traits):
         traits_str = ""
         for trait in traits:
             traits_str += " --trait %s" % trait
-        self.openstack(
+        cls.openstack(
             "resource provider trait set %s %s"
             % (getattr(uuids, rp_name), traits_str)
         )
 
-    def set_aggregate(self, rp_name, aggregate_uuids):
+    @classmethod
+    def set_aggregate(cls, rp_name, aggregate_uuids):
         aggregate_str = ""
         for agg in aggregate_uuids:
             aggregate_str += " --aggregate %s" % agg
-        self.openstack(
+        cls.openstack(
             "resource provider aggregate set %s %s"
             % (getattr(uuids, rp_name), aggregate_str)
         )
 
-    def get_project_id(self, project_name):
-        return self.openstack("project show %s" % project_name, use_json=True)[
+    @classmethod
+    def get_project_id(cls, project_name):
+        return cls.openstack("project show %s" % project_name, use_json=True)[
             "id"
         ]
 
-    def get_user_id(self, user_name):
-        return self.openstack("user show %s" % user_name, use_json=True)["id"]
+    @classmethod
+    def get_user_id(cls, user_name):
+        return cls.openstack("user show %s" % user_name, use_json=True)["id"]
 
+    @classmethod
     def create_allocation(
-        self, consumer_uuid, allocations, project_id, user_id
+        cls, consumer_uuid, allocations, project_id, user_id
     ):
         allocs_str = " ".join(
             [
@@ -140,9 +165,10 @@ class TestBase(base.TestBase):
             )
         )
 
-        self.openstack(cmd)
-        self.addCleanup(lambda: self.delete_allocation(consumer_uuid))
+        cls.openstack(cmd)
+        cls.addClassCleanup(lambda: cls.delete_allocation(consumer_uuid))
 
+    @classmethod
     def delete_allocation(self, consumer_uuid):
         self.openstack(
             "resource provider allocation delete %s" % consumer_uuid

@@ -18,18 +18,19 @@ from osc_placement_tree import tree
 # represented by the model itself so these fields can be dropped from the data
 # store
 DROP_DATA_FIELDS = [
-    'links',  # unused
-    'parent_provider_uuid',  # represented by node relationships
-    'root_provider_uuid']  # unused
+    "links",  # unused
+    "parent_provider_uuid",  # represented by node relationships
+    "root_provider_uuid",
+]  # unused
 
 # These fields are not included in the generated output if they are not
 # explicitly requested by the user
 DEFAULT_HIDDEN_FIELDS = [
-    'generation',
-    'resource_provider_generation',
-    'min_unit',
-    'max_unit',
-    'step_size',
+    "generation",
+    "resource_provider_generation",
+    "min_unit",
+    "max_unit",
+    "step_size",
 ]
 
 
@@ -38,12 +39,12 @@ class ClientAdapter(object):
         self.client = client
 
     def get(self, url):
-        return self.client.request('GET', url).json()
+        return self.client.request("GET", url).json()
 
 
 def _get_field_filter(parsed_args):
     if parsed_args.fields:
-        fields = parsed_args.fields.split(',')
+        fields = parsed_args.fields.split(",")
         return lambda name: name in fields
     else:
         return lambda name: name not in DEFAULT_HIDDEN_FIELDS
@@ -58,23 +59,23 @@ class ShowProviderTree(command.Command):
         parser = super(ShowProviderTree, self).get_parser(prog_name)
 
         parser.add_argument(
-            'uuid',
-            metavar='<name>',
-            help='UUID of one of the provider in the tree to show'
+            "uuid",
+            metavar="<name>",
+            help="UUID of one of the provider in the tree to show",
         )
         parser.add_argument(
-            '--fields',
-            metavar='<fields>',
-            help='The coma separated list of field names of the resource '
-                 'provider to include in the output.',
-            default=''
+            "--fields",
+            metavar="<fields>",
+            help="The coma separated list of field names of the resource "
+            "provider to include in the output.",
+            default="",
         )
         parser.add_argument(
-            '--show_consumers',
-            help='Includes consumers in the result',
-            nargs='?',
+            "--show_consumers",
+            help="Includes consumers in the result",
+            nargs="?",
             const=True,
-            default=False
+            default=False,
         )
         return parser
 
@@ -83,17 +84,17 @@ class ShowProviderTree(command.Command):
         client = ClientAdapter(http)
 
         graph = tree.make_rp_tree(
-            client,
-            parsed_args.uuid,
-            drop_fields=DROP_DATA_FIELDS)
+            client, parsed_args.uuid, drop_fields=DROP_DATA_FIELDS
+        )
 
         if parsed_args.show_consumers:
             tree.extend_rp_graph_with_consumers(client, graph)
 
         print(
             dot.graph_to_dot(
-                graph,
-                field_filter=_get_field_filter(parsed_args)))
+                graph, field_filter=_get_field_filter(parsed_args)
+            )
+        )
 
 
 class ListProviderTree(command.Command):
@@ -102,18 +103,18 @@ class ListProviderTree(command.Command):
     def get_parser(self, prog_name):
         parser = super(ListProviderTree, self).get_parser(prog_name)
         parser.add_argument(
-            '--fields',
-            metavar='<fields>',
-            help='The coma separated list of field names of the resource '
-                 'provider to include in the output.',
-            default=''
+            "--fields",
+            metavar="<fields>",
+            help="The coma separated list of field names of the resource "
+            "provider to include in the output.",
+            default="",
         )
         parser.add_argument(
-            '--show_consumers',
-            help='Includes consumers in the result',
-            nargs='?',
+            "--show_consumers",
+            help="Includes consumers in the result",
+            nargs="?",
             const=True,
-            default=False
+            default=False,
         )
         return parser
 
@@ -121,14 +122,13 @@ class ListProviderTree(command.Command):
         http = self.app.client_manager.placement_tree
         client = ClientAdapter(http)
 
-        graph = tree.make_rp_trees(
-            client,
-            drop_fields=DROP_DATA_FIELDS)
+        graph = tree.make_rp_trees(client, drop_fields=DROP_DATA_FIELDS)
 
         if parsed_args.show_consumers:
             tree.extend_rp_graph_with_consumers(client, graph)
 
         print(
             dot.graph_to_dot(
-                graph,
-                field_filter=_get_field_filter(parsed_args)))
+                graph, field_filter=_get_field_filter(parsed_args)
+            )
+        )

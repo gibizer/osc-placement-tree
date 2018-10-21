@@ -16,24 +16,19 @@ from osc_placement_tree.tests import base
 
 
 class TestHtml(base.TestBase):
-    @mock.patch('osc_placement_tree.html._get_html_key_value')
+    @mock.patch("osc_placement_tree.html._get_html_key_value")
     def test_get_html_dict_sorts_fields(self, mock_get_html_key_value):
-        mock_get_html_key_value.side_effect = ['', '', '', '', '']
-        a_dict = {
-            'foo': 1,
-            'bar': 2,
-            'foobar': 3,
-            'zero': 4,
-            'apple': 5
-        }
+        mock_get_html_key_value.side_effect = ["", "", "", "", ""]
+        a_dict = {"foo": 1, "bar": 2, "foobar": 3, "zero": 4, "apple": 5}
         filter = lambda _: True
         html._get_html_dict(a_dict, filter)
         self.assertEqual(
             [
-                mock.call('apple', 5, filter),
-                mock.call('bar', 2, filter),
-                mock.call('foo', 1, filter),
-                mock.call('foobar', 3, filter),
-                mock.call('zero', 4, filter),
+                mock.call("apple", 5, filter),
+                mock.call("bar", 2, filter),
+                mock.call("foo", 1, filter),
+                mock.call("foobar", 3, filter),
+                mock.call("zero", 4, filter),
             ],
-            mock_get_html_key_value.mock_calls)
+            mock_get_html_key_value.mock_calls,
+        )

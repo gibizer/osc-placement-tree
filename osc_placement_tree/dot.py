@@ -20,6 +20,6 @@ def graph_to_dot(graph, field_filter=lambda _: True):
                          fields that need to be kept in the dot output
     :return: a dot formatted string
     """
-    dot = graphviz.Digraph(node_attr={'shape': 'plaintext'})
+    dot = graphviz.Digraph(node_attr={"shape": "plaintext"})
     graph.add_to_dot(dot, field_filter)
     return dot.source

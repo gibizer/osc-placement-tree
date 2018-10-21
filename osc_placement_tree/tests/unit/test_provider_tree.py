@@ -22,18 +22,18 @@ class TestDot(base.TestBase):
 
         f = provider_tree._get_field_filter(parsed_args)
 
-        self.assertTrue(f('foo'))
-        self.assertTrue(f('bar'))
-        self.assertFalse(f('generation'))
-        self.assertFalse(f('resource_provider_generation'))
+        self.assertTrue(f("foo"))
+        self.assertTrue(f("bar"))
+        self.assertFalse(f("generation"))
+        self.assertFalse(f("resource_provider_generation"))
 
     def test_get_field_filter_user_input(self):
         parsed_args = mock.Mock()
-        parsed_args.fields = 'foo,generation'
+        parsed_args.fields = "foo,generation"
 
         f = provider_tree._get_field_filter(parsed_args)
 
-        self.assertTrue(f('foo'))
-        self.assertFalse(f('bar'))
-        self.assertTrue(f('generation'))
-        self.assertFalse(f('resource_provider_generation'))
+        self.assertTrue(f("foo"))
+        self.assertFalse(f("bar"))
+        self.assertTrue(f("generation"))
+        self.assertFalse(f("resource_provider_generation"))

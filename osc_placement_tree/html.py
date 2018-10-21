@@ -14,7 +14,7 @@ import operator
 
 def _get_attr_html(data_dict, field_filter):
     html_str = _get_html_dict(data_dict, field_filter)
-    return '<' + html_str + '>'
+    return "<" + html_str + ">"
 
 
 def _get_html_scalar(scalar):
@@ -23,24 +23,26 @@ def _get_html_scalar(scalar):
 
 def _get_html_dict(a_dict, field_filter):
     if not a_dict:
-        return '{}'
+        return "{}"
 
-    attrs = ('<TABLE BORDER="0" CELLBORDER="1" '
-             'CELLSPACING="0" CELLPADDING="4">\n')
+    attrs = (
+        '<TABLE BORDER="0" CELLBORDER="1" '
+        'CELLSPACING="0" CELLPADDING="4">\n'
+    )
     for key, value in sorted(a_dict.items(), key=operator.itemgetter(0)):
         if field_filter(key):
             attrs += _get_html_key_value(key, value, field_filter)
-    attrs += '</TABLE>\n'
+    attrs += "</TABLE>\n"
     return attrs
 
 
 def _get_html_value(value, field_filter):
     if isinstance(value, list):
         if not value:
-            return _get_html_scalar('[]')
+            return _get_html_scalar("[]")
 
         # assuming that list items are scalars
-        return _get_html_scalar('<BR/>'.join(value))
+        return _get_html_scalar("<BR/>".join(value))
     elif isinstance(value, dict):
         return _get_html_scalar(_get_html_dict(value, field_filter))
     else:  # assuming scalar
@@ -49,7 +51,9 @@ def _get_html_value(value, field_filter):
 
 def _get_html_key_value(key, value, field_filter):
     # assuming that the key is scalar
-    return ('<TR>' +
-            _get_html_scalar(key) +
-            _get_html_value(value, field_filter) +
-            '</TR>\n')
+    return (
+        "<TR>"
+        + _get_html_scalar(key)
+        + _get_html_value(value, field_filter)
+        + "</TR>\n"
+    )

@@ -17,62 +17,72 @@ from osc_placement_tree.tests import base
 
 
 class TestDot(base.TestBase):
-
-    @mock.patch('graphviz.dot.Dot.edge')
-    @mock.patch('graphviz.dot.Dot.node')
+    @mock.patch("graphviz.dot.Dot.edge")
+    @mock.patch("graphviz.dot.Dot.node")
     def test_graph_to_dot_walks_nodes_and_edges(
-            self, mock_add_node, mock_add_edge):
-        grandchild = graph.RpNode(
-            {'uuid': '4', 'name': 'grand'})
-        child1 = graph.RpNode(
-            {'uuid': '2', 'name': 'child1'})
-        child2 = graph.RpNode(
-            {'uuid': '3', 'name': 'child2'})
-        root = graph.RpNode(
-            {'uuid': '1', 'name': 'root'})
+        self, mock_add_node, mock_add_edge
+    ):
+        grandchild = graph.RpNode({"uuid": "4", "name": "grand"})
+        child1 = graph.RpNode({"uuid": "2", "name": "child1"})
+        child2 = graph.RpNode({"uuid": "3", "name": "child2"})
+        root = graph.RpNode({"uuid": "1", "name": "root"})
 
         g = graph.Graph(
             nodes=[grandchild, child1, child2, root],
             edges=[
                 graph.ParentEdge(node1=child1, node2=root),
                 graph.ParentEdge(node1=child2, node2=root),
-                graph.ParentEdge(node1=grandchild, node2=child2)
-            ])
+                graph.ParentEdge(node1=grandchild, node2=child2),
+            ],
+        )
 
         dot.graph_to_dot(g)
 
         some_html = mock.ANY
         self.assertEqual(
-            [mock.call('4', some_html),
-             mock.call('2', some_html),
-             mock.call('3', some_html),
-             mock.call('1', some_html)],
-            mock_add_node.mock_calls)
+            [
+                mock.call("4", some_html),
+                mock.call("2", some_html),
+                mock.call("3", some_html),
+                mock.call("1", some_html),
+            ],
+            mock_add_node.mock_calls,
+        )
         self.assertEqual(
-            [mock.call('1', '2', dir='back', label='parent'),
-             mock.call('1', '3', dir='back', label='parent'),
-             mock.call('3', '4', dir='back', label='parent')],
-            mock_add_edge.mock_calls)
+            [
+                mock.call("1", "2", dir="back", label="parent"),
+                mock.call("1", "3", dir="back", label="parent"),
+                mock.call("3", "4", dir="back", label="parent"),
+            ],
+            mock_add_edge.mock_calls,
+        )
 
-    @mock.patch('graphviz.dot.Dot.node')
-    @mock.patch('osc_placement_tree.html._get_html_key_value')
+    @mock.patch("graphviz.dot.Dot.node")
+    @mock.patch("osc_placement_tree.html._get_html_key_value")
     def test_graph_to_dot_filters_node_data(
-            self, mock_get_html_key_value, mock_add_node):
-        mock_get_html_key_value.return_value = ''
+        self, mock_get_html_key_value, mock_add_node
+    ):
+        mock_get_html_key_value.return_value = ""
         child = graph.RpNode(
-            {'uuid': '2', 'name': 'child', 'not_needed_field': 42})
+            {"uuid": "2", "name": "child", "not_needed_field": 42}
+        )
         root = graph.RpNode(
-            {'uuid': '1', 'name': 'root', 'not_needed_field': 42})
+            {"uuid": "1", "name": "root", "not_needed_field": 42}
+        )
         g = graph.Graph(
             nodes=[root, child],
-            edges=[graph.ParentEdge(node1=child, node2=root)])
+            edges=[graph.ParentEdge(node1=child, node2=root)],
+        )
 
-        filter = lambda name: name in ['uuid', 'name']
+        filter = lambda name: name in ["uuid", "name"]
         dot.graph_to_dot(g, field_filter=filter)
 
         self.assertEqual(
-            [mock.call('name', 'root', filter),
-             mock.call('uuid', '1', filter),
-             mock.call('name', 'child', filter),
-             mock.call('uuid', '2', filter)],
-            mock_get_html_key_value.mock_calls)
+            [
+                mock.call("name", "root", filter),
+                mock.call("uuid", "1", filter),
+                mock.call("name", "child", filter),
+                mock.call("uuid", "2", filter),
+            ],
+            mock_get_html_key_value.mock_calls,
+        )

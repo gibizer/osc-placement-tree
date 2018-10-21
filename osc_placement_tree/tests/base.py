@@ -17,7 +17,6 @@ from oslotest import base
 
 
 class TestBase(base.BaseTestCase):
-
     def assertDot(self, dot_src):
         """Generates the diagram in the background to verify syntax
 
@@ -27,7 +26,7 @@ class TestBase(base.BaseTestCase):
         # This will raise CalledProcessError if the given source has a syntax
         # error
 
-        if 'OS_TEST_SAVE_DOT' in os.environ and os.environ['OS_TEST_SAVE_DOT']:
+        if "OS_TEST_SAVE_DOT" in os.environ and os.environ["OS_TEST_SAVE_DOT"]:
             file = self.id()
         else:
             file = tempfile.mktemp()

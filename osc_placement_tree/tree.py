@@ -23,15 +23,16 @@ def _get_node_by_id(id, nodes):
     for node in nodes:
         if node.id() == id:
             return node
-    raise ValueError('Node %s not found' % id)
+    raise ValueError("Node %s not found" % id)
 
 
 def _get_parent_edges_between_rp_nodes(nodes):
     edges = []
     for node in nodes:
-        if node.data['parent_provider_uuid']:
+        if node.data["parent_provider_uuid"]:
             parent_node = _get_node_by_id(
-                node.data['parent_provider_uuid'], nodes)
+                node.data["parent_provider_uuid"], nodes
+            )
             edges.append(graph.ParentEdge(node, parent_node))
     return edges
 
@@ -55,8 +56,8 @@ def make_rp_trees(client, drop_fields=None):
     :param drop_fields: the list of field names not to include in the result
     :return: a list of Node objects
     """
-    url = '/resource_providers'
-    rps = client.get(url)['resource_providers']
+    url = "/resource_providers"
+    rps = client.get(url)["resource_providers"]
     rps = _extend_placement_rps(rps, client)
     return _make_graph_from_rps(rps, drop_fields)
 
@@ -71,10 +72,10 @@ def make_rp_tree(client, in_tree_rp_uuid, drop_fields=None):
     :return: a Node object that is the root
     """
 
-    url = '/resource_providers?in_tree=%s' % in_tree_rp_uuid
-    rps_in_tree = client.get(url)['resource_providers']
+    url = "/resource_providers?in_tree=%s" % in_tree_rp_uuid
+    rps_in_tree = client.get(url)["resource_providers"]
     if not rps_in_tree:
-        raise ValueError('%s does not exists' % in_tree_rp_uuid)
+        raise ValueError("%s does not exists" % in_tree_rp_uuid)
     rps = _extend_placement_rps(rps_in_tree, client)
     return _make_graph_from_rps(rps, drop_fields)
 
@@ -84,9 +85,9 @@ def _extend_placement_rps(rps, client):
 
 
 def _extend_rp_data(client, rp):
-    rp.update(client.get('/resource_providers/%s/inventories' % rp['uuid']))
-    rp.update(client.get('/resource_providers/%s/traits' % rp['uuid']))
-    rp.update(client.get('/resource_providers/%s/aggregates' % rp['uuid']))
+    rp.update(client.get("/resource_providers/%s/inventories" % rp["uuid"]))
+    rp.update(client.get("/resource_providers/%s/traits" % rp["uuid"]))
+    rp.update(client.get("/resource_providers/%s/aggregates" % rp["uuid"]))
     return rp
 
 
@@ -100,19 +101,21 @@ def _get_consumer_nodes(client, rp_uuids):
     # a standalone consumer endpoint
     consumer_uuids = set()
     for rp_uuid in rp_uuids:
-        consumers = client.get(
-            '/resource_providers/%s/allocations' %
-            rp_uuid)['allocations'].keys()
+        consumers = client.get("/resource_providers/%s/allocations" % rp_uuid)[
+            "allocations"
+        ].keys()
         consumer_uuids = consumer_uuids.union(consumers)
     # now get consumers one by one
     consumers = {}
     for consumer_uuid in consumer_uuids:
         consumers[consumer_uuid] = client.get(
-            '/allocations/%s' % consumer_uuid)
+            "/allocations/%s" % consumer_uuid
+        )
         # extend that data with its own id
-        consumers[consumer_uuid]['consumer_uuid'] = consumer_uuid
-    return [graph.ConsumerNode(data=consumer)
-            for consumer in consumers.values()]
+        consumers[consumer_uuid]["consumer_uuid"] = consumer_uuid
+    return [
+        graph.ConsumerNode(data=consumer) for consumer in consumers.values()
+    ]
 
 
 def _add_consumers_to_the_graph(g, consumer_nodes):
@@ -125,7 +128,7 @@ def _add_consumers_to_the_graph(g, consumer_nodes):
     """
     g.nodes.extend(consumer_nodes)
     for consumer_node in consumer_nodes:
-        for rp_uuid in consumer_node.data['allocations'].keys():
+        for rp_uuid in consumer_node.data["allocations"].keys():
             rp_node = g.get_node_by_id(rp_uuid)
             g.edges.append(graph.AllocationEdge(consumer_node, rp_node))
 

@@ -31,28 +31,28 @@ class Node(object):
 
 class RpNode(Node):
     def add_to_dot(self, dot, field_filter):
-        dot.node(
-            self.id(),
-            html._get_attr_html(self.data, field_filter))
+        dot.node(self.id(), html._get_attr_html(self.data, field_filter))
 
     def id(self):
-        return self.data['uuid']
+        return self.data["uuid"]
 
 
 class ConsumerNode(Node):
     def _get_node_data(self):
         import copy
+
         data = copy.deepcopy(self.data)
-        data.pop('allocations')
+        data.pop("allocations")
         return data
 
     def add_to_dot(self, dot, field_filter):
         dot.node(
             self.id(),
-            html._get_attr_html(self._get_node_data(), lambda _: True))
+            html._get_attr_html(self._get_node_data(), lambda _: True),
+        )
 
     def id(self):
-        return self.data['consumer_uuid']
+        return self.data["consumer_uuid"]
 
 
 class Edge(object):
@@ -76,10 +76,11 @@ class ParentEdge(Edge):
     node1 should be the child
     node2 should be the parent
     """
+
     def add_to_dot(self, dot):
         # To layout the graph in the dot from parent on top to child below it
         # we need to add a parent -> child edge with reversed arrow
-        dot.edge(self.node2.id(), self.node1.id(), dir='back', label='parent')
+        dot.edge(self.node2.id(), self.node1.id(), dir="back", label="parent")
 
 
 class AllocationEdge(Edge):
@@ -88,19 +89,22 @@ class AllocationEdge(Edge):
     node1 should be the ConsumerNode
     node2 should be the RpNode
     """
+
     def add_to_dot(self, dot):
-        resources = self.node1.data[
-            'allocations'][self.node2.id()]['resources']
+        resources = self.node1.data["allocations"][self.node2.id()][
+            "resources"
+        ]
         # To layout the graph in the dot from RPs on the top and consumers
         # below we need to add the edge reversed
         dot.edge(
             self.node2.id(),
             self.node1.id(),
-            dir='back',
-            label='<' + html._get_html_dict(resources, lambda _: True) + '>',
-            decorate='true',  # connect the label to the edge
-            minlen='2',  # make sure there is space for the label
-            style='dashed')
+            dir="back",
+            label="<" + html._get_html_dict(resources, lambda _: True) + ">",
+            decorate="true",  # connect the label to the edge
+            minlen="2",  # make sure there is space for the label
+            style="dashed",
+        )
 
 
 class Graph(object):
@@ -130,4 +134,4 @@ class Graph(object):
         for node in self.nodes:
             if node.id() == id:
                 return node
-        raise ValueError('Node with id %s not found in the graph' % id)
+        raise ValueError("Node with id %s not found in the graph" % id)

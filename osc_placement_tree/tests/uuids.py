@@ -11,18 +11,19 @@
 # under the License.
 import sys
 
-TEST_NAMESPACE = 'bba8b4ac-5e1e-5a54-825d-0ebaf96d60b3'
+TEST_NAMESPACE = "bba8b4ac-5e1e-5a54-825d-0ebaf96d60b3"
 
 
 class UUIDSentinels(object):
     def __init__(self, namespace):
         import uuid
+
         self._uuid_module = uuid
         self.namespace = uuid.UUID(namespace)
 
     def __getattr__(self, name):
-        if name.startswith('__'):
-            raise ValueError('Sentinels must not start with __')
+        if name.startswith("__"):
+            raise ValueError("Sentinels must not start with __")
 
         return self._uuid_module.uuid5(self.namespace, name)
 

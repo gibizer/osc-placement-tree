@@ -100,7 +100,11 @@ class AllocationEdge(Edge):
             self.node2.id(),
             self.node1.id(),
             dir="back",
-            label="<" + html._get_html_dict(resources, lambda _: True) + ">",
+            label="<{html}>".format(
+                html=html._get_html_dict(
+                    resources, lambda _: True, header="consumes"
+                )
+            ),
             decorate="true",  # connect the label to the edge
             minlen="2",  # make sure there is space for the label
             style="dashed",

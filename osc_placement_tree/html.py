@@ -21,7 +21,7 @@ def _get_html_scalar(scalar):
     return '<TD  ALIGN="LEFT" BALIGN="LEFT">%s</TD>' % scalar
 
 
-def _get_html_dict(a_dict, field_filter):
+def _get_html_dict(a_dict, field_filter, header=None):
     if not a_dict:
         return "{}"
 
@@ -29,6 +29,13 @@ def _get_html_dict(a_dict, field_filter):
         '<TABLE BORDER="0" CELLBORDER="1" '
         'CELLSPACING="0" CELLPADDING="4">\n'
     )
+    if header:
+        attrs += (
+            '<TR BORDER="0" CELLBORDER="0">'
+            '<TD ALIGN="LEFT" BALIGN="LEFT" BORDER="0">'
+            "{header}"
+            "</TD></TR>\n"
+        ).format(header=header)
     for key, value in sorted(a_dict.items(), key=operator.itemgetter(0)):
         if field_filter(key):
             attrs += _get_html_key_value(key, value, field_filter)

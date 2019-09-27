@@ -15,7 +15,7 @@ from osc_placement_tree.resources import provider_tree
 from osc_placement_tree.tests import base
 
 
-class TestDot(base.TestBase):
+class TestProviderTree(base.TestBase):
     def test_get_field_filter_no_user_input(self):
         parsed_args = mock.Mock()
         parsed_args.fields = None
@@ -37,3 +37,41 @@ class TestDot(base.TestBase):
         self.assertFalse(f("bar"))
         self.assertTrue(f("generation"))
         self.assertFalse(f("resource_provider_generation"))
+
+    def test_get_uuid_form_name_or_uuid_with_uuid(self):
+        client = mock.Mock()
+        uuid = "abdc6d98-c2a3-4364-9656-562cfbbb0f3f"
+
+        result = provider_tree._get_uuid_form_name_or_uuid(client, uuid)
+
+        self.assertEqual(uuid, result)
+        client.get.assert_not_called()
+
+    def test_get_uuid_form_name_or_uuid_with_name(self):
+        client = mock.Mock()
+        uuid = "abdc6d98-c2a3-4364-9656-562cfbbb0f3f"
+        name = "devstack"
+        client.get.return_value = {
+            "resource_providers": [
+                {"name": name, "uuid": uuid},
+                {"name": "another", "uuid": "another-uuid"},
+            ]
+        }
+
+        result = provider_tree._get_uuid_form_name_or_uuid(client, name)
+
+        self.assertEqual(uuid, result)
+        client.get.assert_called_once_with("/resource_providers")
+
+    def test_get_uuid_form_name_or_uuid_with_name_not_exists(self):
+        client = mock.Mock()
+        name = "devstack"
+        client.get.return_value = {
+            "resource_providers": [{"name": "another", "uuid": "another-uuid"}]
+        }
+
+        self.assertRaises(
+            ValueError, provider_tree._get_uuid_form_name_or_uuid, client, name
+        )
+
+        client.get.assert_called_once_with("/resource_providers")

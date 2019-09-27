@@ -10,6 +10,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 import os
+import six
 import subprocess
 
 from osc_placement_tree.tests.functional import base
@@ -152,7 +153,7 @@ class TestProviderTree(base.TestBase):
             self.openstack,
             "resource provider tree show %s" % uuids.not_existing_rp,
         )
-        self.assertIn("does not exists", ex.output)
+        self.assertIn("does not exists", six.text_type(ex.output))
 
     def test_provider_tree_show_with_consumers(self):
         dot_src = self.openstack(

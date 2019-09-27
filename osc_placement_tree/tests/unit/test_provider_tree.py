@@ -15,7 +15,7 @@ from osc_placement_tree.resources import provider_tree
 from osc_placement_tree.tests import base
 
 
-class TestDot(base.TestBase):
+class TestProviderTree(base.TestBase):
     def test_get_field_filter_no_user_input(self):
         parsed_args = mock.Mock()
         parsed_args.fields = None

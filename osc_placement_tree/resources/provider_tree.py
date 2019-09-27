@@ -9,6 +9,7 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+import uuid
 
 from cliff import command
 from osc_placement_tree import dot
@@ -50,6 +51,23 @@ def _get_field_filter(parsed_args):
         return lambda name: name not in DEFAULT_HIDDEN_FIELDS
 
 
+def _get_uuid_form_name_or_uuid(client, uuid_or_name):
+    try:
+        uuid.UUID(uuid_or_name)
+        rp_uuid = uuid_or_name
+    except ValueError:
+        rp_name_to_uuid = {
+            rp["name"]: rp["uuid"]
+            for rp in client.get("/resource_providers")["resource_providers"]
+        }
+        rp_uuid = rp_name_to_uuid.get(uuid_or_name)
+
+    if not rp_uuid:
+        raise ValueError("%s does not exists" % uuid_or_name)
+
+    return rp_uuid
+
+
 # This inherits directly from cliff as it wants to emit other than a simple
 # table on the output
 class ShowProviderTree(command.Command):
@@ -59,9 +77,9 @@ class ShowProviderTree(command.Command):
         parser = super(ShowProviderTree, self).get_parser(prog_name)
 
         parser.add_argument(
-            "uuid",
-            metavar="<name>",
-            help="UUID of one of the provider in the tree to show",
+            "uuid_or_name",
+            metavar="<uuid_or_name>",
+            help="UUID or name of one of the provider in the tree to show",
         )
         parser.add_argument(
             "--fields",
@@ -83,8 +101,10 @@ class ShowProviderTree(command.Command):
         http = self.app.client_manager.placement_tree
         client = ClientAdapter(http)
 
+        rp_uuid = _get_uuid_form_name_or_uuid(client, parsed_args.uuid_or_name)
+
         graph = tree.make_rp_tree(
-            client, parsed_args.uuid, drop_fields=DROP_DATA_FIELDS
+            client, rp_uuid, drop_fields=DROP_DATA_FIELDS
         )
 
         if parsed_args.show_consumers:

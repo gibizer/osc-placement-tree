@@ -140,6 +140,20 @@ class TestProviderTree(base.TestBase):
         )
         self.assertDot(dot_src)
 
+    def test_provider_tree_show_with_rp_name(self):
+        dot_src = self.openstack(
+            "resource provider tree show %s" % "compute0_with_disk"
+        )
+        self.assertDot(dot_src)
+
+    def test_provider_tree_show_with_not_existing_rp_name(self):
+        ex = self.assertRaises(
+            subprocess.CalledProcessError,
+            self.openstack,
+            "resource provider tree show %s" % "non-existing-rp",
+        )
+        self.assertIn("does not exists", six.text_type(ex.output))
+
     def test_provider_tree_show_with_fields(self):
         dot_src = self.openstack(
             "resource provider tree show %s "

@@ -9,6 +9,9 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+from io import open
+import six
+
 from osc_placement_tree import dot
 from osc_placement_tree.resources import provider_tree
 from osc_placement_tree import tree
@@ -82,9 +85,8 @@ def dump_placement_db_to_dot(placement_client, out_file, hidden_fields=()):
     graph = tree.make_rp_trees(placement_client, drop_fields=DROP_DATA_FIELDS)
     tree.extend_rp_graph_with_consumers(placement_client, graph)
 
-    with open(out_file, "w") as f:
-        f.write(
-            dot.graph_to_dot(
-                graph, field_filter=lambda name: name not in hidden_fields
-            )
+    with open(out_file, "w", encoding="utf-8") as f:
+        d = dot.graph_to_dot(
+            graph, field_filter=lambda name: name not in hidden_fields
         )
+        f.write(six.text_type(d))
